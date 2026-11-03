@@ -30,6 +30,47 @@ wheels = [
 ]
 
 [[package]]
+name = "clipbook"
+version = "0.2.1"
+source = { editable = "." }
+dependencies = [
+    { name = "certifi" },
+    { name = "docxcompose" },
+    { name = "lxml" },
+    { name = "pyside6" },
+    { name = "python-docx" },
+    { name = "pywin32", marker = "sys_platform == 'win32'" },
+    { name = "pyyaml" },
+    { name = "truststore" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pillow" },
+    { name = "pyinstaller" },
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "certifi", specifier = ">=2026.10.19" },
+    { name = "docxcompose", specifier = ">=2.2.0" },
+    { name = "lxml", specifier = ">=6.1.3" },
+    { name = "pyside6", specifier = ">=6.12.0" },
+    { name = "python-docx", specifier = ">=1.2.0" },
+    { name = "pywin32", marker = "sys_platform == 'win32'", specifier = ">=306" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "truststore", specifier = ">=0.10.5" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pillow", specifier = ">=13.0.0" },
+    { name = "pyinstaller", specifier = ">=6.22.3" },
+    { name = "pytest", specifier = ">=9.1.1" },
+]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -181,47 +222,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/10/2f/97589876ea967487978071c9042518d28b958d87b17dceb7cdc1d881f963/macholib-1.16.4.tar.gz", hash = "sha256:f408c93ab2e995cd2c46e34fe328b130404be143469e41bc366c807448979362", size = 59427, upload-time = "2025-11-22T08:28:38.373Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/d1/a9f36f8ecdf0fb7c9b1e78c8d7af12b8c8754e74851ac7b94a8305540fc7/macholib-1.16.4-py2.py3-none-any.whl", hash = "sha256:da1a3fa8266e30f0ce7e97c6a54eefaae8edd1e5f86f3eb8b95457cae90265ea", size = 38117, upload-time = "2025-11-22T08:28:36.939Z" },
-]
-
-[[package]]
-name = "manual-builder"
-version = "0.2.1"
-source = { editable = "." }
-dependencies = [
-    { name = "certifi" },
-    { name = "docxcompose" },
-    { name = "lxml" },
-    { name = "pyside6" },
-    { name = "python-docx" },
-    { name = "pywin32", marker = "sys_platform == 'win32'" },
-    { name = "pyyaml" },
-    { name = "truststore" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pillow" },
-    { name = "pyinstaller" },
-    { name = "pytest" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "certifi", specifier = ">=2026.10.19" },
-    { name = "docxcompose", specifier = ">=2.2.0" },
-    { name = "lxml", specifier = ">=6.1.3" },
-    { name = "pyside6", specifier = ">=6.12.0" },
-    { name = "python-docx", specifier = ">=1.2.0" },
-    { name = "pywin32", marker = "sys_platform == 'win32'", specifier = ">=306" },
-    { name = "pyyaml", specifier = ">=6.0.3" },
-    { name = "truststore", specifier = ">=0.10.5" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pillow", specifier = ">=13.0.0" },
-    { name = "pyinstaller", specifier = ">=6.22.3" },
-    { name = "pytest", specifier = ">=9.1.1" },
 ]
 
 [[package]]

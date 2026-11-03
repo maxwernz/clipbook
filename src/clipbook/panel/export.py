@@ -183,7 +183,7 @@ def build_panel(lib: Library, machine: Machine, out_dir: Path, log: Log = print)
             raise FileExistsError(f"{folder} gibt es schon und ist keine Panel-Anleitung, bitte umbenennen")
         shutil.rmtree(folder)
     folder.mkdir(parents=True)
-    (folder / STAMP).write_text("Von Manual Builder erzeugt, wird beim nächsten Export überschrieben.\n")
+    (folder / STAMP).write_text("Von Clipbook erzeugt, wird beim nächsten Export überschrieben.\n")
     for f in TEMPLATE.iterdir():
         if f.is_file():
             shutil.copy2(f, folder / f.name)

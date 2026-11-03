@@ -5,18 +5,19 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QLibraryInfo, QLocale, QSettings, QTranslator
+from PySide6.QtCore import QLibraryInfo, QLocale, QTranslator
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
 from .. import __version__
 from ..library import Library
+from .common import app_settings
 
 
 def _candidates(explicit: Path | None) -> list[Path]:
     out = []
     if explicit:
         out.append(explicit)
-    stored = QSettings("ProfilClip", "ManualBuilder").value("library", "")
+    stored = app_settings().value("library", "")
     if stored:
         out.append(Path(stored))
     exe_dir = Path(sys.executable).resolve().parent
@@ -57,7 +58,7 @@ def choose_library(parent=None) -> Library | None:
         box.setWindowTitle("Bibliothek wählen")
         box.setText("<b>Keine Modul-Bibliothek gefunden</b>")
         box.setInformativeText(
-            "Der Anleitungs-Baukasten arbeitet mit einer Bibliothek: einem Ordner mit der Datei "
+            "Clipbook arbeitet mit einer Bibliothek: einem Ordner mit der Datei "
             "<i>library.yaml</i>, den Bausteinen (modules) und den gespeicherten Maschinen. "
             "Normalerweise liegt sie auf dem Netzlaufwerk.<br><br>"
             "<b>Bibliothek öffnen</b>: Ordner einer vorhandenen Bibliothek auswählen "
@@ -120,7 +121,7 @@ def run(library: Path | None = None) -> int:
     logsetup.setup()
     app = QApplication.instance() or QApplication(sys.argv)
     logsetup.install_qt_handlers()
-    app.setApplicationName("Anleitungs-Baukasten")
+    app.setApplicationName("Clipbook")
     app.setOrganizationName("ProfilClip")
     app.setApplicationVersion(__version__)
     from PySide6.QtGui import QIcon
@@ -141,7 +142,7 @@ def run(library: Path | None = None) -> int:
         lib = choose_library()
         if lib is None:
             return 0
-    QSettings("ProfilClip", "ManualBuilder").setValue("library", str(lib.root))
+    app_settings().setValue("library", str(lib.root))
 
     from .main_window import MainWindow
     win = MainWindow(lib)

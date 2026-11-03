@@ -17,11 +17,10 @@ back (or ×) to remove them. Changes are saved automatically; Ctrl+Z undoes.
 from __future__ import annotations
 
 import datetime as _dt
-import os
 import traceback
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QPoint, QSettings, Qt, QThread, QTimer, Signal
+from PySide6.QtCore import QObject, QPoint, Qt, QThread, QTimer, Signal
 from PySide6.QtGui import QAction, QKeySequence, QPixmap
 from PySide6.QtWidgets import (QApplication, QButtonGroup, QComboBox, QDialog, QDialogButtonBox,
                                QCheckBox, QFileDialog, QFormLayout, QFrame, QGraphicsOpacityEffect, QGridLayout, QHBoxLayout,
@@ -34,7 +33,7 @@ from ..build import BuildError, build_manual
 from ..engines import available_engines
 from ..library import Library, Machine, Module, slugify
 from ..outline import Entry, outline
-from .common import open_path
+from .common import app_settings, open_path
 from .flow import FlowLayout
 from .icons import icon, pixmap, slot_style
 from .import_dialog import ImportDialog
@@ -380,7 +379,7 @@ class MachinesPanel(QFrame):
         app_icon.setFixedSize(20, 20)
         app_icon.setScaledContents(True)
         app_row.addWidget(app_icon)
-        app_row.addWidget(ElidedLabel("Anleitungs-Baukasten", "appName"), 1)
+        app_row.addWidget(ElidedLabel("Clipbook", "appName"), 1)
         lay.addLayout(app_row)
         lay.addSpacing(14)
         head = QHBoxLayout()
@@ -1481,10 +1480,9 @@ class SettingsDialog(QDialog):
 class MainWindow(QMainWindow):
     def __init__(self, lib: Library):
         super().__init__()
-        # tests use their own settings so they never touch the user's
-        self.settings = QSettings("ProfilClip", os.environ.get("MANUAL_BUILDER_SETTINGS", "ManualBuilder"))
+        self.settings = app_settings()
         self.lib = lib
-        self.setWindowTitle("Anleitungs-Baukasten")
+        self.setWindowTitle("Clipbook")
         self.resize(1480, 900)
         self.setMinimumSize(980, 640)
         root = QWidget()

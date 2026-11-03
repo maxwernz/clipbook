@@ -5,13 +5,13 @@ import yaml
 from docx import Document
 from docx.oxml.ns import qn
 
-from manual_builder import ooxml
-from manual_builder.build import compose
-from manual_builder.importer import import_file
-from manual_builder.library import Library, Machine
-from manual_builder.normalize import normalize_document
-from manual_builder.seed import DEFAULT_LIBRARY
-from manual_builder.template import create_master_template
+from clipbook import ooxml
+from clipbook.build import compose
+from clipbook.importer import import_file
+from clipbook.library import Library, Machine
+from clipbook.normalize import normalize_document
+from clipbook.seed import DEFAULT_LIBRARY
+from clipbook.template import create_master_template
 
 LEGACY = Path(__file__).resolve().parents[2] / "Bedienungsanleitungen"
 
@@ -184,7 +184,7 @@ def test_reimport_archives_old_version(lib, tmp_path):
 
 @pytest.mark.skipif(not LEGACY.exists(), reason="legacy manuals not available")
 def test_seed_from_legacy(tmp_path):
-    from manual_builder.seed import seed_from_legacy
+    from clipbook.seed import seed_from_legacy
     lib = seed_from_legacy(LEGACY, tmp_path / "lib", log=lambda *_: None)
     assert len(lib.modules["clipper-dcx5s"].entries("faults")) > 5
     machine = Machine.load(lib.machines()[0])

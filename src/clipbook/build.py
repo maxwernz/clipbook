@@ -322,7 +322,7 @@ def build_manual(lib: Library, machine: Machine, out_dir: Path, *, pdf: bool = T
     base = output_basename(machine)
     out_docx = out_dir / f"{base}.docx"
     out_pdf = out_dir / f"{base}.pdf" if pdf else None
-    with tempfile.TemporaryDirectory(prefix="manual-builder-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="clipbook-") as tmp:
         raw = Path(tmp) / f"{base}.docx"
         issues = compose(lib, machine, raw, log)
         log("Inhaltsverzeichnis und Seitenzahlen aktualisieren …")

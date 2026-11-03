@@ -1,6 +1,6 @@
 # PyInstaller recipe. Use the release script instead of calling this directly:
 #     uv run python tools/build_release.py
-# Produces dist/Anleitungs-Baukasten.app (macOS) or dist/Anleitungs-Baukasten/Anleitungs-Baukasten.exe (Windows).
+# Produces dist/Clipbook.app (macOS) or dist/Clipbook/Clipbook.exe (Windows).
 import re
 import sys
 from pathlib import Path
@@ -8,15 +8,15 @@ from pathlib import Path
 from PyInstaller.utils.hooks import collect_data_files
 
 ROOT = Path(SPECPATH).parent
-init = (ROOT / "src" / "manual_builder" / "__init__.py").read_text(encoding="utf-8")
+init = (ROOT / "src" / "clipbook" / "__init__.py").read_text(encoding="utf-8")
 VERSION = re.search(r'__version__ = "([^"]+)"', init).group(1)
 APP_NAME = re.search(r'APP_NAME = "([^"]+)"', init).group(1)
 BUNDLE_ID = re.search(r'BUNDLE_ID = "([^"]+)"', init).group(1)
 ICON = ROOT / "packaging" / "icon"
 
 datas = collect_data_files("docx") + collect_data_files("docxcompose") + collect_data_files("certifi") + [
-    (str(ROOT / "src" / "manual_builder" / "gui" / "assets"), "manual_builder/gui/assets"),
-    (str(ROOT / "src" / "manual_builder" / "panel" / "template"), "manual_builder/panel/template")]
+    (str(ROOT / "src" / "clipbook" / "gui" / "assets"), "clipbook/gui/assets"),
+    (str(ROOT / "src" / "clipbook" / "panel" / "template"), "clipbook/panel/template")]
 hidden = ["truststore"]
 if sys.platform == "win32":
     hidden += ["win32com", "win32com.client", "pythoncom", "pywintypes"]
@@ -45,5 +45,5 @@ if sys.platform == "darwin":
                      "NSRequiresAquaSystemAppearance": True,     # app has its own light theme
                      "NSHumanReadableCopyright": "© Profi L-Clip GmbH – interne Software",
                      "NSAppleEventsUsageDescription":
-                         "Der Anleitungs-Baukasten steuert Microsoft Word, um Inhaltsverzeichnis und PDF zu erzeugen.",
+                         "Clipbook steuert Microsoft Word, um Inhaltsverzeichnis und PDF zu erzeugen.",
                  })

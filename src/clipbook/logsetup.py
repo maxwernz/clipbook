@@ -1,9 +1,9 @@
 """Logging to a file per user, and a friendly dialog instead of a crash.
 
 Log folder:
-  macOS    ~/Library/Logs/Anleitungs-Baukasten/
-  Windows  %LOCALAPPDATA%/Anleitungs-Baukasten/Logs/
-  other    ~/.local/state/Anleitungs-Baukasten/
+  macOS    ~/Library/Logs/Clipbook/
+  Windows  %LOCALAPPDATA%/Clipbook/Logs/
+  other    ~/.local/state/Clipbook/
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from pathlib import Path
 
 from . import APP_NAME, __version__
 
-log = logging.getLogger("baukasten")
+log = logging.getLogger("clipbook")
 
 
 def log_dir() -> Path:

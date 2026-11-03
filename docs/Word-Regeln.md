@@ -1,6 +1,6 @@
 # Regeln für Word-Module
 
-Damit Manual Builder ein Modul richtig einbaut, gelten für die Word-Dateien ein paar einfache Regeln.
+Damit Clipbook ein Modul richtig einbaut, gelten für die Word-Dateien ein paar einfache Regeln.
 Beim Import prüft das Programm die Datei und zeigt Abweichungen an.
 
 ## Überschriften

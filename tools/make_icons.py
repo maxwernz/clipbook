@@ -2,7 +2,7 @@
 
     uv run python tools/make_icons.py
 Writes packaging/icon/app_icon.icns (macOS), app_icon.ico (Windows), app_icon.png (1024)
-and src/manual_builder/gui/assets/app_icon.png (256, window icon).
+and src/clipbook/gui/assets/app_icon.png (256, window icon).
 """
 import os
 import sys
@@ -41,7 +41,7 @@ def main() -> None:
     frames[256].save(ICON / "app_icon.ico", format="ICO", sizes=[(s, s) for s in ico_sizes],
                      append_images=[frames[s] for s in ico_sizes[:-1]])
     big.save(ICON / "app_icon.icns", format="ICNS")
-    frames[256].save(ROOT / "src" / "manual_builder" / "gui" / "assets" / "app_icon.png")
+    frames[256].save(ROOT / "src" / "clipbook" / "gui" / "assets" / "app_icon.png")
     print("icons written to", ICON)
 
 

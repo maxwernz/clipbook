@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from manual_builder import updater
+from clipbook import updater
 
 
 def _feed(tmp_path: Path, version="9.9.9", payload=b"new app", sha=None, size=None, key=None) -> Path:
@@ -108,6 +108,6 @@ def test_dev_version_cannot_self_update():
 
 def test_versions_match():
     import re
-    from manual_builder import __version__
+    from clipbook import __version__
     py = (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(encoding="utf-8")
     assert re.search(r'^version = "([^"]+)"', py, re.M).group(1) == __version__

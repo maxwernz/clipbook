@@ -166,7 +166,7 @@ _CHECK = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="
 
 
 def _icon_dir() -> str:
-    d = Path(tempfile.gettempdir()) / "anleitungs-baukasten-icons"
+    d = Path(tempfile.gettempdir()) / "clipbook-icons"
     d.mkdir(exist_ok=True)
     (d / "chevron.svg").write_text(_CHEVRON, encoding="utf-8")
     (d / "check.svg").write_text(_CHECK, encoding="utf-8")

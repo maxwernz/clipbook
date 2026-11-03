@@ -15,7 +15,7 @@ from .. import __version__, updater
 from .icons import icon, pixmap
 from .style import ACCENT, ERROR, MUTED
 
-log = logging.getLogger("baukasten.update")
+log = logging.getLogger("clipbook.update")
 CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000      # every 6 hours while the app is open
 
 
@@ -136,7 +136,7 @@ class _DownloadWorker(QObject):
 
     def run(self):
         try:
-            target = Path(tempfile.mkdtemp(prefix="baukasten-update-dl-"))
+            target = Path(tempfile.mkdtemp(prefix="clipbook-update-dl-"))
             path = updater.download(self.rel, target, progress=lambda d, t: self.progress.emit(d, t),
                                     cancelled=self.cancel.is_set)
             self.done.emit(path)

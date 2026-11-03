@@ -48,13 +48,13 @@ jobs:
             if (-not $p.WaitForExit(300000)) { Write-Error "Setup hängt"; exit 1 }
             if ($p.ExitCode -ne 0) { Get-Content $log; Write-Error "Setup-Fehler $($p.ExitCode)"; exit 1 }
           }
-          $dir = "$env:LOCALAPPDATA\Programs\Anleitungs-Baukasten"
-          $exe = "$dir\Anleitungs-Baukasten.exe"
+          $dir = "$env:LOCALAPPDATA\Programs\Clipbook"
+          $exe = "$dir\Clipbook.exe"
 
           Run-Setup @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') "install.log"
           Start-Sleep -Seconds 5
-          if (-not (Get-Process "Anleitungs-Baukasten" -ErrorAction SilentlyContinue)) { Write-Error "App wurde nach der Installation nicht gestartet"; exit 1 }
-          Get-Process "Anleitungs-Baukasten" | Stop-Process -Force
+          if (-not (Get-Process "Clipbook" -ErrorAction SilentlyContinue)) { Write-Error "App wurde nach der Installation nicht gestartet"; exit 1 }
+          Get-Process "Clipbook" | Stop-Process -Force
           if (-not (Test-Path "$dir\unins000.exe")) { Write-Error "Uninstaller fehlt"; exit 1 }
 
           $t = Start-Process $exe -ArgumentList 'self-test','--out',"$PWD\installed.json" -PassThru
@@ -67,8 +67,8 @@ jobs:
           Start-Sleep -Seconds 6
           Run-Setup @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/CLOSEAPPLICATIONS') "update.log"
           Start-Sleep -Seconds 5
-          if (-not (Get-Process "Anleitungs-Baukasten" -ErrorAction SilentlyContinue)) { Write-Error "App wurde nach dem Update nicht neu gestartet"; exit 1 }
-          Get-Process "Anleitungs-Baukasten" | Stop-Process -Force
+          if (-not (Get-Process "Clipbook" -ErrorAction SilentlyContinue)) { Write-Error "App wurde nach dem Update nicht neu gestartet"; exit 1 }
+          Get-Process "Clipbook" | Stop-Process -Force
           Write-Host "Installation und Update ok"
       - uses: actions/upload-artifact@v4
         with:
@@ -96,5 +96,5 @@ jobs:
         run: |
           VERSION=$(python3 -c "import json;print(json.load(open('out/latest.json'))['version'])")
           python3 -c "import json;print(json.load(open('out/latest.json'))['notes'])" > notes.md
-          gh release create "v$VERSION" --title "Anleitungs-Baukasten $VERSION" --notes-file notes.md \
+          gh release create "v$VERSION" --title "Clipbook $VERSION" --notes-file notes.md \
             out/* $(find dl -name '*.dmg') $(find dl -name 'asset-*.json')

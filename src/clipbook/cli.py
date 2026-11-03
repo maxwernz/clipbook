@@ -1,4 +1,4 @@
-"""Command line: manual-builder [gui|build|panel|check|import|seed|template] ..."""
+"""Command line: clipbook [gui|build|panel|check|import|seed|template] ..."""
 
 from __future__ import annotations
 
@@ -161,7 +161,7 @@ def cmd_update(args) -> int:
     if args.action != "apply":
         return 0
     import tempfile
-    pkg = updater.download(res.release, Path(tempfile.mkdtemp(prefix="baukasten-dl-")),
+    pkg = updater.download(res.release, Path(tempfile.mkdtemp(prefix="clipbook-dl-")),
                            progress=lambda d, t: None)
     updater.install(pkg, relaunch=not args.no_relaunch)
     print("Installation gestartet – die App wird ersetzt, sobald dieser Prozess endet.")
@@ -172,7 +172,7 @@ def main(argv: list[str] | None = None) -> int:
     from . import __version__
     argv = list(sys.argv[1:] if argv is None else argv)
     argv = [a for a in argv if not a.startswith("-psn_")]     # macOS Finder process id
-    ap = argparse.ArgumentParser(prog="anleitungs-baukasten", description="Betriebsanleitungen aus Bausteinen bauen")
+    ap = argparse.ArgumentParser(prog="clipbook", description="Betriebsanleitungen aus Bausteinen bauen")
     ap.add_argument("--version", action="version", version=__version__)
     ap.add_argument("--library", "-l", default="library", help="Pfad zur Bibliothek")
     sub = ap.add_subparsers(dest="cmd")

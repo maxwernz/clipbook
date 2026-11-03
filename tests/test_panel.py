@@ -10,14 +10,14 @@ from docx.shared import Pt
 from lxml import etree
 from PySide6.QtGui import QColor, QImage
 
-from manual_builder.build import BuildError
-from manual_builder.importer import import_file
-from manual_builder.library import Library, Machine
-from manual_builder.panel.convert import Block, Converter
-from manual_builder.panel.export import STAMP, build_panel, paginate
-from manual_builder.panel.images import ImageStore
-from manual_builder.seed import DEFAULT_LIBRARY
-from manual_builder.template import create_master_template
+from clipbook.build import BuildError
+from clipbook.importer import import_file
+from clipbook.library import Library, Machine
+from clipbook.panel.convert import Block, Converter
+from clipbook.panel.export import STAMP, build_panel, paginate
+from clipbook.panel.images import ImageStore
+from clipbook.seed import DEFAULT_LIBRARY
+from clipbook.template import create_master_template
 
 ANCHOR = """
 <w:r xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"

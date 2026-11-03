@@ -2,7 +2,7 @@
 
 ## Kurzfassung
 
-1. Version erhöhen (`src/manual_builder/__init__.py` und `pyproject.toml`), Abschnitt in `CHANGELOG.md` schreiben.
+1. Version erhöhen (`src/clipbook/__init__.py` und `pyproject.toml`), Abschnitt in `CHANGELOG.md` schreiben.
 2. `git tag v0.3.0 && git push origin main v0.3.0`
 3. GitHub baut automatisch Windows-Setup und Mac-Apps (Apple Silicon und Intel), testet sie und legt eine
    Version unter **Releases** an.
@@ -32,17 +32,17 @@ Ist eine Quelle nicht erreichbar, wird sie still übersprungen (steht im Protoko
   halb kopierte Version.
 - Mac: Vor dem Austausch wird die Signatur der neuen App geprüft. Schlägt der Austausch fehl, bleibt die
   alte App erhalten.
-- Windows: Installation pro Benutzer nach `%LOCALAPPDATA%\Programs\Anleitungs-Baukasten`, ohne
+- Windows: Installation pro Benutzer nach `%LOCALAPPDATA%\Programs\Clipbook`, ohne
   Administratorrechte. Das Update läuft still und startet die App danach neu.
 
 ## Erstinstallation
 
-**Windows:** `Anleitungs-Baukasten-<Version>-Setup.exe` ausführen. Das Programm ist (noch) nicht
+**Windows:** `Clipbook-<Version>-Setup.exe` ausführen. Das Programm ist (noch) nicht
 signiert. Wurde die Datei aus dem Internet oder aus Teams geladen, zeigt Windows eventuell
 „Der Computer wurde durch Windows geschützt“ → *Weitere Informationen* → *Trotzdem ausführen*.
 Spätere Updates zeigen diese Meldung nicht.
 
-**Mac:** `Anleitungs-Baukasten-<Version>-macOS-arm64.dmg` (Apple Silicon) bzw. `-x86_64` (Intel) öffnen
+**Mac:** `Clipbook-<Version>-macOS-arm64.dmg` (Apple Silicon) bzw. `-x86_64` (Intel) öffnen
 und die App in „Programme“ ziehen. Die App ist nicht bei Apple notarisiert. Kommt sie aus dem Internet,
 blockiert macOS den ersten Start: *Systemeinstellungen → Datenschutz & Sicherheit → Trotzdem öffnen*.
 Vom Netzlaufwerk kopiert, startet sie normalerweise direkt. Spätere Updates zeigen die Meldung nicht.
@@ -56,8 +56,8 @@ Developer ID (99 €/Jahr) für die Notarisierung. Beides lässt sich in `tools/
 
 ## Protokolle
 
-- Mac: `~/Library/Logs/Anleitungs-Baukasten/` (`app.log`, `update.log`)
-- Windows: `%LOCALAPPDATA%\Anleitungs-Baukasten\Logs\`, Setup-Protokoll: `%TEMP%\Anleitungs-Baukasten-update.log`
+- Mac: `~/Library/Logs/Clipbook/` (`app.log`, `update.log`)
+- Windows: `%LOCALAPPDATA%\Clipbook\Logs\`, Setup-Protokoll: `%TEMP%\Clipbook-update.log`
 
 ## Lokal bauen
 

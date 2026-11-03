@@ -24,7 +24,7 @@ for _stream in (sys.stdout, sys.stderr):   # Windows consoles are not UTF-8 by d
     if hasattr(_stream, "reconfigure"):
         _stream.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, str(ROOT / "src"))
-from manual_builder.updater import parse_version  # noqa: E402
+from clipbook.updater import parse_version  # noqa: E402
 
 
 def sha256(path: Path) -> str:
@@ -72,7 +72,7 @@ def main() -> None:
     if args.github:
         import subprocess
         import tempfile
-        tmp = Path(tempfile.mkdtemp(prefix="baukasten-release-"))
+        tmp = Path(tempfile.mkdtemp(prefix="clipbook-release-"))
         subprocess.run(["gh", "release", "download", args.github, "-D", str(tmp), "-p", "asset-*.json",
                         "-p", "*.zip", "-p", "*.exe"], check=True)
         args.release_dirs.append(tmp)

@@ -2,9 +2,9 @@
 
     uv run python tools/build_release.py
 
-macOS   → release/<version>/Anleitungs-Baukasten-<version>-macOS-<arch>.zip   (used for updates)
-          release/<version>/Anleitungs-Baukasten-<version>-macOS-<arch>.dmg   (first installation)
-Windows → release/<version>/Anleitungs-Baukasten-<version>-Setup.exe          (installation + updates)
+macOS   → release/<version>/Clipbook-<version>-macOS-<arch>.zip   (used for updates)
+          release/<version>/Clipbook-<version>-macOS-<arch>.dmg   (first installation)
+Windows → release/<version>/Clipbook-<version>-Setup.exe          (installation + updates)
 
 Each run also writes release/<version>/asset-<platform>.json (checksum, size), which
 tools/publish_update.py turns into latest.json for the update source.
@@ -25,8 +25,8 @@ for _stream in (sys.stdout, sys.stderr):   # Windows consoles are not UTF-8 by d
     if hasattr(_stream, "reconfigure"):
         _stream.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, str(ROOT / "src"))
-from manual_builder import APP_NAME, __version__  # noqa: E402
-from manual_builder.updater import platform_key  # noqa: E402
+from clipbook import APP_NAME, __version__  # noqa: E402
+from clipbook.updater import platform_key  # noqa: E402
 
 VERSION = __version__
 DIST = ROOT / "dist"
@@ -81,7 +81,7 @@ def windows_version_file() -> None:
 def pyinstaller() -> None:
     for d in (DIST,):
         shutil.rmtree(d, ignore_errors=True)
-    run([sys.executable, "-m", "PyInstaller", ROOT / "packaging" / "manual_builder.spec", "--noconfirm",
+    run([sys.executable, "-m", "PyInstaller", ROOT / "packaging" / "clipbook.spec", "--noconfirm",
          "--clean", "--distpath", DIST, "--workpath", BUILD / "pyinstaller"])
 
 

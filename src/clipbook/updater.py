@@ -7,8 +7,8 @@ An update source ("feed") is a folder or web address containing ``latest.json``:
       "released": "2026-11-02",
       "notes": "- Neue Funktion …",
       "assets": {
-        "windows-x64":  {"file": "Anleitungs-Baukasten-0.3.0-Setup.exe", "sha256": "…", "size": 123},
-        "macos-arm64":  {"file": "Anleitungs-Baukasten-0.3.0-macOS-arm64.zip", "sha256": "…", "size": 123}
+        "windows-x64":  {"file": "Clipbook-0.3.0-Setup.exe", "sha256": "…", "size": 123},
+        "macos-arm64":  {"file": "Clipbook-0.3.0-macOS-arm64.zip", "sha256": "…", "size": 123}
       }
     }
 
@@ -43,7 +43,7 @@ from typing import Callable
 
 from . import APP_NAME, GITHUB_REPO, __version__
 
-log = logging.getLogger("baukasten.update")
+log = logging.getLogger("clipbook.update")
 
 GITHUB_FEED = f"https://github.com/{GITHUB_REPO}/releases/latest/download/latest.json"
 TIMEOUT = 15
@@ -334,8 +334,9 @@ def _install_windows(setup: Path) -> None:
 
 
 _MAC_SCRIPT = r'''#!/bin/bash
-# replaces the app bundle after the running app has quit, then reopens it
-PID="$1"; OLD="$2"; NEW="$3"; RELAUNCH="$4"; LOG="$5"; WORK="$6"
+# replaces the app bundle after the running app has quit, then reopens it.
+# TARGET is OLD, or OLD's folder + the new app's name if the app was renamed.
+PID="$1"; OLD="$2"; NEW="$3"; RELAUNCH="$4"; LOG="$5"; WORK="$6"; TARGET="${7:-$2}"
 exec >>"$LOG" 2>&1
 echo "$(date) update: waiting for $PID"
 for i in $(seq 1 600); do kill -0 "$PID" 2>/dev/null || break; sleep 0.2; done
@@ -343,31 +344,34 @@ swap() {
   set -e
   BAK="${OLD%.app}.update-old.app"
   rm -rf "$BAK"
+  [ "$TARGET" != "$OLD" ] && rm -rf "$TARGET"
   mv "$OLD" "$BAK"
-  if ! mv "$NEW" "$OLD"; then mv "$BAK" "$OLD"; exit 1; fi
+  if ! mv "$NEW" "$TARGET"; then mv "$BAK" "$OLD"; exit 1; fi
   rm -rf "$BAK"
-  xattr -dr com.apple.quarantine "$OLD" 2>/dev/null || true
+  xattr -dr com.apple.quarantine "$TARGET" 2>/dev/null || true
 }
 if [ -w "$(dirname "$OLD")" ] && [ -w "$OLD" ]; then
-  ( swap ) || echo "$(date) update: swap failed"
+  ( swap ) || { echo "$(date) update: swap failed"; TARGET="$OLD"; }
 else
   echo "$(date) update: asking for administrator rights"
-  /usr/bin/osascript -e "do shell script \"/bin/bash '$WORK/swap.sh' '$OLD' '$NEW'\" with administrator privileges" \
-    || echo "$(date) update: cancelled or failed"
+  /usr/bin/osascript -e "do shell script \"/bin/bash '$WORK/swap.sh' '$OLD' '$NEW' '$TARGET'\" with administrator privileges" \
+    || { echo "$(date) update: cancelled or failed"; TARGET="$OLD"; }
 fi
-touch "$OLD"
-[ "$RELAUNCH" = "1" ] && /usr/bin/open "$OLD"
+touch "$TARGET"
+[ "$RELAUNCH" = "1" ] && /usr/bin/open "$TARGET"
 rm -rf "$WORK"
 echo "$(date) update: done"
 '''
 
 _MAC_SWAP = r'''#!/bin/bash
 set -e
-OLD="$1"; NEW="$2"; BAK="${OLD%.app}.update-old.app"
-rm -rf "$BAK"; mv "$OLD" "$BAK"
-if ! mv "$NEW" "$OLD"; then mv "$BAK" "$OLD"; exit 1; fi
+OLD="$1"; NEW="$2"; TARGET="${3:-$1}"; BAK="${OLD%.app}.update-old.app"
 rm -rf "$BAK"
-xattr -dr com.apple.quarantine "$OLD" 2>/dev/null || true
+[ "$TARGET" != "$OLD" ] && rm -rf "$TARGET"
+mv "$OLD" "$BAK"
+if ! mv "$NEW" "$TARGET"; then mv "$BAK" "$OLD"; exit 1; fi
+rm -rf "$BAK"
+xattr -dr com.apple.quarantine "$TARGET" 2>/dev/null || true
 '''
 
 
@@ -391,12 +395,13 @@ def prepare_macos(zip_path: Path, work: Path) -> Path:
 
 def _install_macos(zip_path: Path, relaunch: bool) -> None:
     old = app_bundle()
-    work = Path(tempfile.mkdtemp(prefix="baukasten-update-"))
+    work = Path(tempfile.mkdtemp(prefix="clipbook-update-"))
     new_app = prepare_macos(zip_path, work)
     script = work / "update.sh"
     script.write_text(_MAC_SCRIPT, encoding="utf-8")
     (work / "swap.sh").write_text(_MAC_SWAP, encoding="utf-8")
     from .logsetup import log_dir
+    target = old.parent / new_app.name      # differs from old only if the app was renamed
     _detached(["/bin/bash", str(script), str(os.getpid()), str(old), str(new_app),
-               "1" if relaunch else "0", str(log_dir() / "update.log"), str(work)])
-    log.info("macOS-Update vorbereitet: %s -> %s", new_app, old)
+               "1" if relaunch else "0", str(log_dir() / "update.log"), str(work), str(target)])
+    log.info("macOS-Update vorbereitet: %s -> %s", new_app, target)

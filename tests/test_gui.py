@@ -14,9 +14,9 @@ pytestmark = pytest.mark.skipif(bool(os.environ.get("CI")) or not LIB.exists(),
 @pytest.fixture(scope="module")
 def app():
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    os.environ["MANUAL_BUILDER_SETTINGS"] = "ManualBuilderTest"
+    os.environ["CLIPBOOK_SETTINGS"] = "ClipbookTest"
     from PySide6.QtWidgets import QApplication
-    from manual_builder.gui import style
+    from clipbook.gui import style
     a = QApplication.instance() or QApplication([])
     style.apply(a)
     return a
@@ -50,8 +50,8 @@ def drag(app, source, target, target_local):
 
 def test_drag_and_drop_flow(app, tmp_path):
     from PySide6.QtCore import QPoint
-    from manual_builder.gui.main_window import ChapterTile, LibraryTile, MainWindow
-    from manual_builder.library import Library, Machine
+    from clipbook.gui.main_window import ChapterTile, LibraryTile, MainWindow
+    from clipbook.library import Library, Machine
 
     lib_dir = tmp_path / "lib"
     shutil.copytree(LIB, lib_dir, ignore=shutil.ignore_patterns("archive"))
@@ -111,10 +111,10 @@ def test_update_dialog_flow(app, tmp_path, monkeypatch):
     import hashlib
     import json
     from PySide6.QtWidgets import QApplication
-    from manual_builder import updater
-    from manual_builder.gui import update_ui
-    from manual_builder.gui.main_window import MainWindow
-    from manual_builder.library import Library
+    from clipbook import updater
+    from clipbook.gui import update_ui
+    from clipbook.gui.main_window import MainWindow
+    from clipbook.library import Library
 
     feed = tmp_path / "feed"
     feed.mkdir()
@@ -160,7 +160,7 @@ def test_update_dialog_flow(app, tmp_path, monkeypatch):
 
 
 def test_find_library_root_tolerates_one_level_off(tmp_path):
-    from manual_builder.gui.app import find_library_root
+    from clipbook.gui.app import find_library_root
     lib = tmp_path / "Anleitungs-Bibliothek"
     (lib / "modules").mkdir(parents=True)
     (lib / "library.yaml").write_text("slots: []\n")
@@ -173,7 +173,7 @@ def test_find_library_root_tolerates_one_level_off(tmp_path):
 
 
 def test_new_library_target_uses_subfolder_when_not_empty(tmp_path):
-    from manual_builder.gui.app import new_library_target
+    from clipbook.gui.app import new_library_target
     assert new_library_target(tmp_path) == tmp_path
     (tmp_path / "something.txt").write_text("x")
     assert new_library_target(tmp_path) == tmp_path / "Anleitungs-Bibliothek"

@@ -35,7 +35,7 @@ class EngineError(RuntimeError):
 def find_libreoffice() -> tuple[Path, Path] | None:
     """Return (soffice, python) of a LibreOffice installation."""
     candidates: list[tuple[Path, Path]] = []
-    env = os.environ.get("MANUAL_BUILDER_LIBREOFFICE")
+    env = os.environ.get("CLIPBOOK_LIBREOFFICE")
     if env:
         base = Path(env)
         candidates.append((base / "program" / "soffice.exe", base / "program" / "python.exe"))
@@ -185,7 +185,7 @@ end run
 
 def _word_mac(src: Path, out_docx: Path, out_pdf: Path | None, log: Log) -> None:
     # Word for Mac is sandboxed: it can always read/write its own container folder.
-    container = Path.home() / "Library" / "Containers" / "com.microsoft.Word" / "Data" / "manual-builder"
+    container = Path.home() / "Library" / "Containers" / "com.microsoft.Word" / "Data" / "clipbook"
     container.mkdir(parents=True, exist_ok=True)
     tag = uuid.uuid4().hex[:8]
     w_src = container / f"in_{tag}.docx"
@@ -211,7 +211,7 @@ def _word_mac(src: Path, out_docx: Path, out_pdf: Path | None, log: Log) -> None
 
 _BASIC_MODULE = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
-<script:module xmlns:script="http://openoffice.org/2000/script" script:name="ManualBuilder" script:language="StarBasic">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="Clipbook" script:language="StarBasic">
 Sub UpdateAndExport(src As String, pdf As String)
   Dim args(0) As New com.sun.star.beans.PropertyValue
   args(0).Name = &quot;Hidden&quot;
@@ -239,7 +239,7 @@ _SCRIPT_XLB = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library:library PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "library.dtd">
 <library:library xmlns:library="http://openoffice.org/2000/library" library:name="Standard" library:readonly="false" library:passwordprotected="false">
  <library:element library:name="Module1"/>
- <library:element library:name="ManualBuilder"/>
+ <library:element library:name="Clipbook"/>
 </library:library>
 """
 
@@ -261,7 +261,7 @@ def _libreoffice(src: Path, out_docx: Path, out_pdf: Path | None, log: Log) -> N
     if not out_pdf:
         return
     log("LibreOffice: Inhaltsverzeichnis aktualisieren und PDF erzeugen …")
-    with tempfile.TemporaryDirectory(prefix="manual-builder-lo-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="clipbook-lo-") as tmp:
         tmp_path = Path(tmp)
         profile = tmp_path / "profile"
         # 1) create a fresh profile, 2) add our macro to "My Macros", 3) run it
@@ -269,12 +269,12 @@ def _libreoffice(src: Path, out_docx: Path, out_pdf: Path | None, log: Log) -> N
         std = profile / "user" / "basic" / "Standard"
         if not std.exists():
             raise EngineError("LibreOffice-Profil konnte nicht angelegt werden")
-        (std / "ManualBuilder.xba").write_text(_BASIC_MODULE, encoding="utf-8")
+        (std / "Clipbook.xba").write_text(_BASIC_MODULE, encoding="utf-8")
         (std / "script.xlb").write_text(_SCRIPT_XLB, encoding="utf-8")
         in_doc = tmp_path / "in.docx"
         pdf_tmp = tmp_path / "out.pdf"
         shutil.copyfile(src, in_doc)
-        macro = 'macro:///Standard.ManualBuilder.UpdateAndExport("%s","%s")' % (in_doc, pdf_tmp)
+        macro = 'macro:///Standard.Clipbook.UpdateAndExport("%s","%s")' % (in_doc, pdf_tmp)
         proc = _soffice(soffice, profile, macro)
         if not pdf_tmp.exists():
             raise EngineError((proc.stderr or proc.stdout).strip()[-2000:] or "kein PDF erzeugt")

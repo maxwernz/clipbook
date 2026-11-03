@@ -1,6 +1,6 @@
 """Render the original manual exactly as before (old files, old order, typed chapter numbers).
 
-Used as a reference to compare against manuals built with Manual Builder.
+Used as a reference to compare against manuals built with Clipbook.
     uv run python tools/render_reference.py ../Bedienungsanleitungen ~/ProfilClip/Referenz
 """
 import sys
@@ -11,8 +11,8 @@ from docx import Document
 from docx.enum.text import WD_BREAK
 from docxcompose.composer import Composer
 
-from manual_builder import ooxml
-from manual_builder.engines import finalize
+from clipbook import ooxml
+from clipbook.engines import finalize
 
 ORDER = [  # chapter order of "Inhaltsverzeichnis_Struktur Anleitung.pdf"
     "Deutsch/Allgemeine Anleitung/Allgemein_Deutsch_Muss angepasst werden.docx",  # 1–9.1

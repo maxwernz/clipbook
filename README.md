@@ -1,4 +1,4 @@
-# Anleitungs-Baukasten (Manual Builder)
+# Clipbook
 
 Desktop app (macOS + Windows) that assembles Profil-Clip operating manuals from Word modules
 ("Bausteine"). You pick the parts of a machine; the app merges the matching `.docx` files into one
@@ -23,9 +23,9 @@ without a printer therefore doesn't list printer faults.
 
 ```bash
 uv sync
-uv run manual-builder                       # GUI (asks for the library on first start)
-uv run manual-builder -l ../Anleitungs-Bibliothek build skt-h10-beispiel -o ~/Desktop/out
-uv run manual-builder -l ../Anleitungs-Bibliothek panel skt-h10-beispiel -o ~/Desktop/out   # HMI panel (HTML)
+uv run clipbook                       # GUI (asks for the library on first start)
+uv run clipbook -l ../Anleitungs-Bibliothek build skt-h10-beispiel -o ~/Desktop/out
+uv run clipbook -l ../Anleitungs-Bibliothek panel skt-h10-beispiel -o ~/Desktop/out   # HMI panel (HTML)
 uv run pytest
 ```
 
@@ -65,7 +65,7 @@ Anleitungs-Bibliothek/
   machines/<name>.yaml       saved machine configurations
 ```
 
-It was created once from `../Bedienungsanleitungen` with `manual-builder -l <dir> seed <legacy dir>`.
+It was created once from `../Bedienungsanleitungen` with `clipbook -l <dir> seed <legacy dir>`.
 `SEED_REPORT.md` in the library lists how the old fault/maintenance tables were split up. **Please
 review it.** Rows can be moved between modules in the app (double-click a module → table → "In anderes
 Modul verschieben").

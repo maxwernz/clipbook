@@ -1,13 +1,13 @@
 ; Inno Setup script – built by tools/build_release.py on Windows:
-;   ISCC.exe /DAppVersion=0.2.0 /DSourceDir=..\..\dist\Anleitungs-Baukasten /DOutputDir=..\..\release\0.2.0 installer.iss
-; Installs per user (no administrator rights) to %LOCALAPPDATA%\Programs\Anleitungs-Baukasten,
+;   ISCC.exe /DAppVersion=0.2.0 /DSourceDir=..\..\dist\Clipbook /DOutputDir=..\..\release\0.2.0 installer.iss
+; Installs per user (no administrator rights) to %LOCALAPPDATA%\Programs\Clipbook,
 ; so the app can update itself silently later.
 
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif
-#define AppName "Anleitungs-Baukasten"
-#define AppExe "Anleitungs-Baukasten.exe"
+#define AppName "Clipbook"
+#define AppExe "Clipbook.exe"
 
 [Setup]
 ; never change the AppId – it identifies the installation for updates and uninstall
@@ -21,6 +21,8 @@ VersionInfoVersion={#AppVersion}
 VersionInfoCompany=Profi L-Clip GmbH
 VersionInfoDescription={#AppName} Setup
 DefaultDirName={autopf}\{#AppName}
+; always the folder above, also when updating an installation from before the rename
+UsePreviousAppDir=no
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 DisableDirPage=auto
@@ -49,6 +51,10 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [InstallDelete]
 ; remove files of the previous version so nothing stale is left behind
 Type: filesandordirs; Name: "{app}\_internal"
+; the app was called "Anleitungs-Baukasten" up to 0.2.1: remove its folder and shortcuts
+Type: filesandordirs; Name: "{localappdata}\Programs\Anleitungs-Baukasten"
+Type: files; Name: "{autoprograms}\Anleitungs-Baukasten.lnk"
+Type: files; Name: "{autodesktop}\Anleitungs-Baukasten.lnk"
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs

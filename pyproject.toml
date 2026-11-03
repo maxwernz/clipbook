@@ -1,5 +1,5 @@
 [project]
-name = "manual-builder"
+name = "clipbook"
 version = "0.2.1"
 description = "Betriebsanleitungen aus Word-Modulen zusammenstellen (Inhaltsverzeichnis, Seitenzahlen, Störungslisten)"
 authors = [{ name = "Profi L-Clip GmbH" }]
@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-manual-builder = "manual_builder:main"
+clipbook = "clipbook:main"
 
 [build-system]
 requires = ["uv_build>=0.9.22,<0.10.0"]

@@ -114,7 +114,7 @@ class ImportDialog(QDialog):
         lay.setContentsMargins(24, 20, 24, 20)
         lay.setSpacing(14)
         lay.addWidget(_label("Word-Datei hinzufügen", "title"))
-        lay.addWidget(_label("Neue oder geänderte Texte kommen als Word-Datei in den Baukasten. "
+        lay.addWidget(_label("Neue oder geänderte Texte kommen als Word-Datei in die Bibliothek. "
                              "Die Datei wird geprüft und für die Anleitungen vorbereitet – "
                              "Ihr Original bleibt unverändert.", "subtitle"))
 
