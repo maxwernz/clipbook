@@ -19,7 +19,7 @@ from typing import Callable
 from docx import Document
 
 from ..build import BuildError, _replace_placeholders
-from ..library import Issue, Library, Machine, Module
+from ..library import Issue, Library, Machine, Module, is_draft
 from ..normalize import normalize_document
 from .convert import Block, Converter
 from .images import ImageStore
@@ -242,13 +242,16 @@ def build_panel(lib: Library, machine: Machine, out_dir: Path, log: Log = print)
     for m in modules:
         for x in m.entries("faults"):
             data["faults"].append({"code": str(x.get("code", "")).strip(), "component": m.id,
+                                   **({"draft": True} if is_draft(x) else {}),
                                    **{k: texts(x.get(k)) for k in ("message", "cause", "remedy")}})
             codes.setdefault(str(x.get("code")), []).append(m.label())
         for x in m.entries("maintenance"):
             data["maintenance"].append({"interval_days": x.get("interval_days") or 0, "component": m.id,
+                                        **({"draft": True} if is_draft(x) else {}),
                                         **{k: texts(x.get(k)) for k in ("interval", "task", "parts")}})
         for x in m.entries("spare_parts"):
             data["spare_parts"].append({"part_no": str(x.get("part_no", "")), "component": m.id,
+                                        **({"draft": True} if is_draft(x) else {}),
                                         **{k: texts(x.get(k)) for k in ("description", "interval")}})
     for code, mods in codes.items():
         if len(mods) > 1:

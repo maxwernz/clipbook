@@ -147,6 +147,17 @@ def icon_label(name: str, color: str, size: int = 18) -> QLabel:
     return lbl
 
 
+def draft_marker(module: Module, size: int = 14) -> QLabel | None:
+    """Orange sign for modules whose tables contain unchecked draft rows."""
+    n = module.draft_count()
+    if not n:
+        return None
+    w = icon_label("alert", WARN, size)
+    w.setToolTip(f"Entwurf: {n} Tabellenzeilen (Wartung/Ersatzteile/Störungen) sind automatisch zugeordnet "
+                 "und nicht geprüft. Baustein bearbeiten zeigt die Details.")
+    return w
+
+
 def badge(name: str, color: str, box: int = 32, size: int = 18) -> QLabel:
     """Colored icon on a light tinted square."""
     lbl = QLabel()
@@ -542,6 +553,8 @@ class LibraryTile(DraggableTile):
         bottom.setSpacing(4)
         bottom.addWidget(label(" · ".join(meta), "hint"))
         bottom.addStretch()
+        if (dm := draft_marker(module)) is not None:
+            bottom.addWidget(dm)
         if have and lang not in have:
             warn = icon_label("globe", WARN, 14)
             warn.setToolTip(f"Kein Text auf {LANG_LABELS.get(lang, lang)} – deutscher Text wird verwendet")
@@ -719,6 +732,8 @@ class ChapterTile(DraggableTile):
         sub = ElidedLabel(" · ".join(bits), "hint")
         col.addWidget(sub)
         row.addLayout(col, 1)
+        if (dm := draft_marker(module, 16)) is not None:
+            row.addWidget(dm)
         if module.has_text() and lang not in module.languages():
             w = icon_label("globe", WARN, 16)
             w.setToolTip(f"Kein Text auf {LANG_LABELS.get(lang, lang)} – deutscher Text wird verwendet")

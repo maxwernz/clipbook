@@ -19,24 +19,26 @@
       noPageSub: "Bitte Nummer prüfen oder in der Liste suchen.", prev: "Zurück", next: "Weiter",
       fault: "Störung", unknown: "Seite nicht gefunden", fallback: "Diese Seite gibt es nur auf {l}.",
       empty: "Zu dieser Baugruppe gibt es keinen Text.", zoom: "Zum Schließen tippen", pages: "Kapitel",
-      page1: "Kapitel", chapter: "Kapitel" },
+      page1: "Kapitel", chapter: "Kapitel", draft: "Entwurf", draftSub: "Automatisch zugeordnet, nicht geprüft" },
     en: { help: "Help", faultsSub: "Enter number", maintSub: "What is due when", partsSub: "Part numbers",
       comps: "Assemblies of this machine", enter: "Fault number", all: "All faults",
       toComp: "Go to assembly", noPage: "There is no help page for fault {c}.",
       noPageSub: "Please check the number or search the list.", prev: "Back", next: "Next",
       fault: "Fault", unknown: "Page not found", fallback: "This page is only available in {l}.",
       empty: "There is no text for this assembly.", zoom: "Tap to close", pages: "chapters",
-      page1: "chapter", chapter: "Chapter" },
+      page1: "chapter", chapter: "Chapter", draft: "Draft", draftSub: "Assigned automatically, not checked" },
     it: { help: "Aiuto", faultsSub: "Inserire numero", maintSub: "Cosa e quando", partsSub: "Codici ricambio",
       comps: "Gruppi di questa macchina", enter: "Numero guasto", all: "Tutti i guasti",
       toComp: "Al gruppo", noPage: "Nessuna pagina di aiuto per il guasto {c}.",
       noPageSub: "Controllare il numero o cercare nella lista.", prev: "Indietro", next: "Avanti",
       fault: "Guasto", unknown: "Pagina non trovata", fallback: "Questa pagina è disponibile solo in {l}.",
       empty: "Nessun testo per questo gruppo.", zoom: "Tocca per chiudere", pages: "capitoli",
-      page1: "capitolo", chapter: "Capitolo" },
+      page1: "capitolo", chapter: "Capitolo", draft: "Bozza", draftSub: "Assegnato automaticamente, non verificato" },
   };
   const LANG_NAME = { de: "Deutsch", en: "English", it: "Italiano" };
   const t = (k) => (UI[lang] || UI.de)[k] || UI.de[k];
+  // unchecked draft rows (assigned automatically, see library DRAFT_KEY)
+  const draftTag = (x) => (x && x.draft ? ` <span class="tag draft" title="${t("draftSub")}">${t("draft")}</span>` : "");
   const L = (k) => ((M.labels || {})[lang] || {})[k] || ((M.labels || {})[LANGS[0]] || {})[k] || k;
   const tr = (v) => (v && typeof v === "object" ? v[lang] || v[LANGS[0]] || Object.values(v)[0] || "" : v || "");
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -156,7 +158,7 @@
 
   function faultRows(filter) {
     return faults.filter((f) => !filter || f.component === filter).map((f) =>
-      row(`#/fault/${encodeURIComponent(f.code)}`, esc(f.code), esc(tr(f.message)),
+      row(`#/fault/${encodeURIComponent(f.code)}`, esc(f.code), esc(tr(f.message)) + draftTag(f),
           esc(tr((comp(f.component) || {}).title)), `style="--c:${color(f.component)}"`));
   }
 
@@ -198,7 +200,7 @@
       title: `${t("fault")} ${esc(f.code)}`, up: "#/faults",
       html: `<div class="fill fault">
         <div class="fault-head"><span class="code" style="--c:${color(f.component)}">${esc(f.code)}</span>
-          <div><h2>${esc(tr(f.message))}</h2>${c ? `<small>${esc(tr(c.title))}</small>` : ""}</div></div>
+          <div><h2>${esc(tr(f.message))}${draftTag(f)}</h2>${c ? `<small>${esc(tr(c.title))}</small>` : ""}${f.draft ? `<small class="draft-note">${t("draft")}: ${t("draftSub")}</small>` : ""}</div></div>
         <div class="cols">
           <div class="card warn"><h3>${esc(L("cause"))}</h3>${lines(f.cause).map((l) => `<div>${esc(l)}</div>`).join("")}</div>
           <div class="card"><h3>${esc(L("remedy"))}</h3><ol>${lines(f.remedy).map((l) => `<li>${esc(l)}</li>`).join("")}</ol></div>
@@ -411,7 +413,7 @@
       .sort((a, b) => a.interval_days - b.interval_days);
     const items = rows.map((r) => `<div class="mrow"><div class="when">${esc(tr(r.interval))}
         ${assembly(r.component) && !filter ? `<span class="tag" style="--c:${color(r.component)}">${esc(tr(comp(r.component).title))}</span>` : ""}</div>
-        <div><b>${esc(tr(r.task))}</b><small>${lines(r.parts).map(esc).join(" · ")}</small></div></div>`);
+        <div><b>${esc(tr(r.task))}</b>${draftTag(r)}<small>${lines(r.parts).map(esc).join(" · ")}</small></div></div>`);
     const c = filter && comp(filter);
     const list = paged(`maint-${filter || ""}`, items, { cols: 2, rowH: 104 });
     return {
@@ -425,7 +427,7 @@
     const rows = (M.spare_parts || []).slice().sort((a, b) => String(a.part_no).localeCompare(String(b.part_no)));
     const items = rows.map((p) => `<div class="mrow"><div class="when">${esc(p.part_no)}
         ${assembly(p.component) ? `<span class="tag" style="--c:${color(p.component)}">${esc(tr(comp(p.component).title))}</span>` : ""}</div>
-        <div><b>${esc(tr(p.description))}</b>${tr(p.interval) ? `<small>${esc(L("interval"))}: ${esc(tr(p.interval))}</small>` : ""}</div></div>`);
+        <div><b>${esc(tr(p.description))}</b>${draftTag(p)}${tr(p.interval) ? `<small>${esc(L("interval"))}: ${esc(tr(p.interval))}</small>` : ""}</div></div>`);
     const list = paged("parts", items, { cols: 2, rowH: 92 });
     return { title: esc(L("spare_parts")), up: "#/", html: `<div class="fill">${list.html}</div>`, after: list.mount };
   }

@@ -23,6 +23,14 @@ import yaml
 
 DATA_SECTIONS = ("maintenance", "spare_parts", "faults")
 
+# A table row with a "draft" text is an unchecked proposal (e.g. assigned automatically by the
+# first import). The text says what is unsure. Only a person who is responsible removes it.
+DRAFT_KEY = "draft"
+
+
+def is_draft(entry: dict) -> bool:
+    return bool(str(entry.get(DRAFT_KEY) or "").strip())
+
 
 def _load_yaml(path: Path) -> Any:
     if not path.exists():
@@ -114,6 +122,11 @@ class Module:
 
     def has_data(self) -> bool:
         return any(self.entries(s) for s in DATA_SECTIONS)
+
+    def draft_count(self, section: str | None = None) -> int:
+        """Table rows that are an unchecked draft."""
+        sections = [section] if section else DATA_SECTIONS
+        return sum(1 for s in sections for e in self.entries(s) if is_draft(e))
 
     # -- persistence
     @classmethod
@@ -309,6 +322,7 @@ class Library:
     # -- validation of a machine configuration
     def validate(self, machine: Machine) -> list[Issue]:
         issues: list[Issue] = []
+        drafts: list[Module] = []
         lang = machine.language
         if lang not in self.languages:
             issues.append(Issue("warning", f"Sprache '{lang}' ist nicht in library.yaml eingetragen"))
@@ -325,6 +339,8 @@ class Library:
                                     f"es wird '{self.default_language}' verwendet"))
             if not m.has_text() and not m.has_data():
                 issues.append(Issue("warning", f"'{m.label(lang)}' ist leer"))
+            if m.draft_count():
+                drafts.append(m)
             for c in m.conflicts:
                 if c in machine.modules:
                     issues.append(Issue("error", f"'{m.label(lang)}' und "
@@ -334,6 +350,11 @@ class Library:
                     issues.append(Issue("error", f"'{m.label(lang)}' benötigt '{self._lbl(r, lang)}'"))
             if self.slot(m.slot) is None:
                 issues.append(Issue("warning", f"'{m.label(lang)}' hat unbekannten Platz '{m.slot}'"))
+        if drafts:
+            n = sum(m.draft_count() for m in drafts)
+            issues.append(Issue("warning", f"Entwurf: {n} {'Tabellenzeile ist' if n == 1 else 'Tabellenzeilen sind'} "
+                                           f"(Wartung/Ersatzteile/Störungen) automatisch zugeordnet und nicht geprüft "
+                                           f"– in {', '.join(m.label(lang) for m in drafts)}"))
         if len(set(machine.modules)) != len(machine.modules):
             issues.append(Issue("error", "Ein Modul ist mehrfach enthalten"))
         for s in self.slots:

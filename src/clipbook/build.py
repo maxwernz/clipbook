@@ -17,7 +17,7 @@ from docxcompose.composer import Composer
 
 from . import ooxml
 from .engines import finalize
-from .library import DATA_SECTIONS, Issue, Library, Machine, Module, tr
+from .library import DATA_SECTIONS, Issue, Library, Machine, Module, is_draft, tr
 from .normalize import normalize_document
 from .tables import make_table, pageref
 from .template import heading_style_ids
@@ -29,6 +29,26 @@ MARKER = re.compile(r"\{\{\s*(ABSCHNITT_WARTUNG|ABSCHNITT_ERSATZTEILE|ABSCHNITT_
                     r"(?::([A-Za-z0-9_\-]+))?\s*\}\}")
 OWN_MARKER = {"ABSCHNITT_WARTUNG": "maintenance", "ABSCHNITT_ERSATZTEILE": "spare_parts",
               "ABSCHNITT_STOERUNGEN": "faults"}
+# unchecked draft rows (see library.DRAFT_KEY): shaded and explained below the table
+DRAFT_FILL = "FCE4C4"
+DRAFT_NOTE = {"de": "ENTWURF: Die orange markierten Zeilen wurden automatisch zugeordnet und sind nicht geprüft.",
+              "en": "DRAFT: rows marked orange were assigned automatically and have not been checked.",
+              "it": "BOZZA: le righe in arancione sono state assegnate automaticamente e non sono verificate."}
+
+
+def _fills(entries: list[dict]) -> list[str | None]:
+    return [DRAFT_FILL if is_draft(x) else None for x in entries]
+
+
+def _draft_note(lang: str):
+    p = ooxml.make_paragraph(DRAFT_NOTE.get(lang, DRAFT_NOTE["de"]), bold=True, size_half_points=18)
+    for rpr in p.iter(qn("w:rPr")):
+        color = OxmlElement("w:color")
+        color.set(qn("w:val"), "A15C00")
+        rpr.insert(1, color)                    # after <w:b>, before <w:sz>
+    return p
+
+
 SECTION_LABEL = {"maintenance": "maintenance", "spare_parts": "spare_parts", "faults": "faults"}
 
 
@@ -80,18 +100,18 @@ class _Renderer:
             return make_table([self.L("interval"), self.L("task"), self.L("parts")],
                               [[self.t(x.get("interval"), module), self.t(x.get("task"), module),
                                 self.t(x.get("parts"), module)] for x in e],
-                              [3.5, 5.5, 7.0])
+                              [3.5, 5.5, 7.0], row_fills=_fills(e))
         if section == "spare_parts":
             return make_table([self.L("part_no"), self.L("description"), self.L("interval")],
                               [[str(x.get("part_no", "")), self.t(x.get("description"), module),
                                 self.t(x.get("interval"), module)] for x in e],
-                              [3.0, 8.5, 4.5])
+                              [3.0, 8.5, 4.5], row_fills=_fills(e))
         e.sort(key=lambda x: _code_key(x.get("code")))
         return make_table([self.L("code"), self.L("cause"), self.L("remedy")],
                           [[f"{x.get('code', '')}\n{self.t(x.get('message'), module)}",
                             self.t(x.get("cause"), module), self.t(x.get("remedy"), module)]
                            for x in e],
-                          [4.0, 5.5, 6.5])
+                          [4.0, 5.5, 6.5], row_fills=_fills(e))
 
     def own_sections(self, module: Module, with_heading: bool, only: str | None = None) -> list:
         out = []
@@ -109,39 +129,47 @@ class _Renderer:
             if with_heading or section == "faults":
                 out.append(anchor)
             out.append(self.own_table(module, section))
+            if module.draft_count(section):
+                out.append(_draft_note(self.lang))
             out.append(ooxml.make_paragraph(""))
         return out
 
     # overviews across all modules of the machine
     def overview(self, kind: str) -> list:
-        rows = []
+        rows = []                      # (sort key, draft?, cells)
+
+        def fills(rows):
+            return [DRAFT_FILL if d else None for _, d, _ in rows]
         if kind == "GESAMT_WARTUNGSPLAN":
             for m in self.modules:
                 for x in m.entries("maintenance"):
-                    rows.append((x.get("interval_days") or 0, [self.t(x.get("interval"), m), m.component_label(self.lang),
+                    rows.append((x.get("interval_days") or 0, is_draft(x), [self.t(x.get("interval"), m), m.component_label(self.lang),
                                                                 self.t(x.get("task"), m), self.t(x.get("parts"), m)]))
             rows.sort(key=lambda r: r[0])
             tbl = make_table([self.L("interval"), self.L("module"), self.L("task"), self.L("parts")],
-                             [r for _, r in rows], [3.0, 3.5, 4.0, 5.5])
+                             [r for _, _, r in rows], [3.0, 3.5, 4.0, 5.5], row_fills=fills(rows))
         elif kind == "GESAMT_ERSATZTEILE":
             for m in self.modules:
                 for x in m.entries("spare_parts"):
-                    rows.append((str(x.get("part_no", "")), [str(x.get("part_no", "")),
+                    rows.append((str(x.get("part_no", "")), is_draft(x), [str(x.get("part_no", "")),
                                                               self.t(x.get("description"), m),
                                                               self.t(x.get("interval"), m), m.component_label(self.lang)]))
             rows.sort(key=lambda r: r[0])
             tbl = make_table([self.L("part_no"), self.L("description"), self.L("interval"), self.L("module")],
-                             [r for _, r in rows], [2.8, 6.0, 3.7, 3.5])
+                             [r for _, _, r in rows], [2.8, 6.0, 3.7, 3.5], row_fills=fills(rows))
         else:
             for m in self.modules:
                 for x in m.entries("faults"):
-                    rows.append((_code_key(x.get("code")), [str(x.get("code", "")), self.t(x.get("message"), m),
+                    rows.append((_code_key(x.get("code")), is_draft(x), [str(x.get("code", "")), self.t(x.get("message"), m),
                                                              m.component_label(self.lang),
                                                              pageref(self.fault_bookmarks.get(m.id))]))
             rows.sort(key=lambda r: r[0])
             tbl = make_table([self.L("no"), self.L("message"), self.L("module"), self.L("page")],
-                             [r for _, r in rows], [1.5, 8.0, 4.5, 2.0])
-        return [tbl, ooxml.make_paragraph("")]
+                             [r for _, _, r in rows], [1.5, 8.0, 4.5, 2.0], row_fills=fills(rows))
+        out = [tbl]
+        if any(d for _, d, _ in rows):
+            out.append(_draft_note(self.lang))
+        return out + [ooxml.make_paragraph("")]
 
 
 def _code_key(code) -> tuple:

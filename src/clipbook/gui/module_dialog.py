@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QGridLayout,
                                QFormLayout, QHBoxLayout, QHeaderView, QInputDialog, QLabel,
                                QLineEdit, QListWidget, QMessageBox, QPlainTextEdit, QPushButton,
                                QStyledItemDelegate, QTableWidget, QTableWidgetItem, QTabWidget,
                                QVBoxLayout, QWidget)
 
-from ..library import DATA_SECTIONS, Library, Module, tr
+from ..library import DATA_SECTIONS, DRAFT_KEY, Library, Module, is_draft, tr
 from .common import lang_name, open_path
 
 # (key, header, translated?, numeric?)
@@ -28,6 +29,9 @@ COLUMNS = {
                ("remedy", "Behebung", True, False)],
 }
 SECTION_TITLES = {"maintenance": "Wartung", "spare_parts": "Ersatzteile", "faults": "Störungen"}
+DRAFT_BG = QColor("#fce4c4")
+DRAFT_BANNER_STYLE = ("background:#fff4e5; border:1px solid #f0b46a; border-radius:6px; padding:8px 10px;"
+                      "color:#7a4500;")
 
 
 class MultiLineDelegate(QStyledItemDelegate):
@@ -57,6 +61,10 @@ class DataTable(QWidget):
         self.dialog = dialog
         self.cols = COLUMNS[section]
         lay = QVBoxLayout(self)
+        self.banner = QLabel()
+        self.banner.setWordWrap(True)
+        self.banner.setStyleSheet(DRAFT_BANNER_STYLE)
+        lay.addWidget(self.banner)
         self.table = QTableWidget(0, len(self.cols))
         self.table.setHorizontalHeaderLabels([c[1] for c in self.cols])
         self.table.setWordWrap(True)
@@ -71,7 +79,9 @@ class DataTable(QWidget):
         lay.addWidget(self.table)
         row = QHBoxLayout()
         for text, slot in (("Zeile hinzufügen", self.add_row), ("Zeilen löschen", self.delete_rows),
-                           ("In anderen Baustein verschieben …", self.move_rows)):
+                           ("In anderen Baustein verschieben …", self.move_rows),
+                           ("Als geprüft markieren …", self.mark_checked),
+                           ("Als Entwurf markieren …", self.mark_draft)):
             b = QPushButton(text)
             b.clicked.connect(slot)
             row.addWidget(b)
@@ -85,6 +95,27 @@ class DataTable(QWidget):
         for e in self.entries:
             self._append(e, lang)
         self.table.resizeRowsToContents()
+        self._update_banner()
+
+    def draft_count(self) -> int:
+        return sum(1 for e in self.entries if is_draft(e))
+
+    def tab_title(self) -> str:
+        n = self.draft_count()
+        return f"{SECTION_TITLES[self.section]}  {len(self.entries)}" + ("  · Entwurf" if n else "")
+
+    def _update_banner(self) -> None:
+        n = self.draft_count()
+        self.banner.setVisible(bool(n))
+        if n:
+            self.banner.setText(
+                f"<b>Entwurf – nicht geprüft.</b> {n} von {len(self.entries)} Zeilen (orange) wurden "
+                "automatisch diesem Baustein zugeordnet. Das ist ein Vorschlag, kein geprüfter Stand: "
+                "Zuordnung und Inhalt muss die zuständige Person klären. Maus auf eine Zeile zeigt die "
+                "offene Frage. In der Anleitung werden diese Zeilen ebenfalls als Entwurf markiert.")
+        idx = self.dialog.tabs.indexOf(self) if hasattr(self.dialog, "tabs") else -1
+        if idx >= 0:
+            self.dialog.tabs.setTabText(idx, self.tab_title())
 
     def _append(self, e: dict, lang: str) -> None:
         r = self.table.rowCount()
@@ -100,6 +131,10 @@ class DataTable(QWidget):
             else:
                 v = e.get(key)
                 item = QTableWidgetItem("" if v is None else str(v))
+            if is_draft(e):
+                if item.background().style() == Qt.BrushStyle.NoBrush:   # keep "translation missing" yellow
+                    item.setBackground(DRAFT_BG)
+                item.setToolTip("\n".join(x for x in (str(e[DRAFT_KEY]), item.toolTip()) if x))
             self.table.setItem(r, c, item)
 
     def store(self, lang: str) -> None:
@@ -139,6 +174,39 @@ class DataTable(QWidget):
         self.store(self.dialog.lang)
         for r in reversed(rows):
             del self.entries[r]
+        self.load(self.dialog.lang)
+
+    def mark_checked(self) -> None:
+        rows = [r for r in self.selected_rows() if is_draft(self.entries[r])]
+        if not rows:
+            QMessageBox.information(self, "Als geprüft markieren",
+                                    "Bitte zuerst orange markierte Zeilen (Entwurf) auswählen.")
+            return
+        answer = QMessageBox.question(
+            self, "Als geprüft markieren",
+            f"{len(rows)} Zeilen als geprüft markieren?\n\nBitte nur, wenn die zuständige Person Zuordnung "
+            "und Inhalt bestätigt hat. Danach erscheinen die Zeilen in der Anleitung ohne Entwurfs-Hinweis.")
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        self.store(self.dialog.lang)
+        for r in rows:
+            self.entries[r].pop(DRAFT_KEY, None)
+        self.dialog.checked_notes.append(f"{len(rows)} {SECTION_TITLES[self.section]}-Zeilen als geprüft markiert")
+        self.load(self.dialog.lang)
+
+    def mark_draft(self) -> None:
+        rows = self.selected_rows()
+        if not rows:
+            QMessageBox.information(self, "Als Entwurf markieren", "Bitte zuerst Zeilen auswählen.")
+            return
+        note, ok = QInputDialog.getText(self, "Als Entwurf markieren",
+                                        "Was ist offen oder muss geklärt werden?",
+                                        text="Entwurf: Vorschlag, nicht fachlich geprüft.")
+        if not ok:
+            return
+        self.store(self.dialog.lang)
+        for r in rows:
+            self.entries[r][DRAFT_KEY] = note.strip() or "Entwurf: Vorschlag, nicht fachlich geprüft."
         self.load(self.dialog.lang)
 
     def move_rows(self) -> None:
@@ -182,6 +250,7 @@ class ModuleDialog(QDialog):
         self.module = module
         self.lang = lang
         self.changed_other = False
+        self.checked_notes: list[str] = []
         self.setWindowTitle(f"Baustein: {module.label(lang)}")
         self.resize(1100, 760)
         lay = QVBoxLayout(self)
@@ -219,7 +288,7 @@ class ModuleDialog(QDialog):
         for section in DATA_SECTIONS:
             t = DataTable(section, self)
             self.tables[section] = t
-            self.tabs.addTab(t, f"{SECTION_TITLES[section]}  {len(t.entries)}")
+            self.tabs.addTab(t, t.tab_title())
             t.load(self.lang)
 
         bb = QHBoxLayout()
@@ -358,7 +427,7 @@ class ModuleDialog(QDialog):
                 changed_data = True
             m.data[section] = entries
         if changed_data:
-            m.add_history("Tabellen bearbeitet")
+            m.add_history("; ".join(self.checked_notes) if self.checked_notes else "Tabellen bearbeitet")
         m.save_meta()
         m.save_data()
         self.accept()

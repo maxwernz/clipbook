@@ -66,9 +66,21 @@ Anleitungs-Bibliothek/
 ```
 
 It was created once from `../Bedienungsanleitungen` with `clipbook -l <dir> seed <legacy dir>`.
-`SEED_REPORT.md` in the library lists how the old fault/maintenance tables were split up. **Please
-review it.** Rows can be moved between modules in the app (double-click a module → table → "In anderes
-Modul verschieben").
+`SEED_REPORT.md` in the library lists how the old fault/maintenance tables were split up.
+
+**The split is a draft, not a checked result.** The import assigned every maintenance, spare-part and
+fault row to a module automatically (by fault number and keywords). Which row belongs to which assembly
+has to be decided by the person responsible for the content. Until then every such row carries a
+`draft:` text in `data.yaml` (what is unsure), and it is marked everywhere:
+
+- App: orange sign on the tile; in the module dialog an "Entwurf" notice and orange rows (hover = open question)
+- Check before building: a warning per module
+- Word/PDF: orange rows plus the note "ENTWURF: …" below the table
+- Panel: an "Entwurf" tag
+
+Rows can be moved to another module ("In anderen Baustein verschieben"). The draft mark is only removed
+with "Als geprüft markieren" once the responsible person has confirmed it; "Als Entwurf markieren"
+marks any other row as an open proposal.
 
 Rules for writing modules are in [docs/Word-Regeln.md](docs/Word-Regeln.md).
 

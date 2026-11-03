@@ -171,6 +171,9 @@ for codes, mods in [
 ASSIGN_MAINTENANCE = [("clipper", CLIPPERS)]
 ASSIGN_PARTS = [("teflon", FILM), ("temperatur sensor", FILM), ("heizpatrone", FILM)]
 
+SEED_DRAFT = ("Entwurf: beim Erstimport automatisch aus „Wartung und Störungen“ diesem Baustein "
+              "zugeordnet, nicht fachlich geprüft.")
+
 UNSURE = {3: "Küken – Dosierung?", 4: "Freihub – Folie?", 8: "Messer – Clipper?",
           50: "Proportional-Regelventil – Grundmaschine oder Dosierung?",
           65: "Endverdränger – Clipper?", 90: "Steckerkontrolle Beuteltisch – Beutelkontrolle?",
@@ -214,7 +217,9 @@ def _parse_service(doc, report: list[str]):
     """Extract maintenance / spare parts / fault tables -> data per module."""
     data: dict[str, dict[str, list]] = {}
 
-    def add(mods, section, entry):
+    def add(mods, section, entry, question: str = ""):
+        entry = dict(entry)
+        entry["draft"] = SEED_DRAFT + (f" Offene Frage: {question}" if question else "")
         for m in mods:
             data.setdefault(m, {}).setdefault(section, []).append(dict(entry))
 
@@ -245,7 +250,7 @@ def _parse_service(doc, report: list[str]):
         message = re.sub(r"(?<=[a-zäöü])-(?=[a-zäöü])", "", message)  # "Heiz-patrone" -> "Heizpatrone"
         mods = ASSIGN_FAULTS.get(code, BASE)
         add(mods, "faults", {"code": code, "message": {"de": message},
-                             "cause": {"de": cause}, "remedy": {"de": remedy}})
+                             "cause": {"de": cause}, "remedy": {"de": remedy}}, UNSURE.get(code, ""))
         report.append(f"| {code} | {message} | {', '.join(mods)} | {UNSURE.get(code, '')} |")
     return data
 
@@ -293,8 +298,11 @@ def seed_from_legacy(legacy_root: Path, library_root: Path, log=print) -> Librar
     template_src = legacy_root / LEGACY_MODULES[0][1]["de"]
     lib = create_library(library_root, template_src)
     report = ["# Erstimport der bestehenden Anleitungen\n",
-              "Diese Zuordnung ist ein Entwurf – bitte prüfen und im Programm korrigieren "
-              "(Modul doppelklicken → Tabellen).\n"]
+              "> **ENTWURF – nicht geprüft.** Die Zuordnung unten ist ein automatischer Vorschlag der App, "
+              "kein fachlich geprüfter Stand. Welche Wartung, welches Ersatzteil und welche Störung zu "
+              "welcher Baugruppe gehört, muss die zuständige Person klären. Bis dahin sind alle diese "
+              "Zeilen in der App orange markiert und in Word/PDF und auf dem Panel als „Entwurf“ "
+              "gekennzeichnet. Freigeben: Baustein bearbeiten → Tabelle → „Als geprüft markieren“.\n"]
     service_data = {}
     with tempfile.TemporaryDirectory() as tmp:
         for mid, files, title, slot, kind, component in LEGACY_MODULES:

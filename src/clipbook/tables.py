@@ -31,8 +31,10 @@ def _cell_paragraphs(content: Cell, bold: bool, size: int) -> list:
 
 
 def make_table(headers: Sequence[str], rows: Sequence[Sequence[Cell]], widths_cm: Sequence[float],
-               font_size_pt: float = 10, header_fill: str = "D9D9D9"):
-    """Return a <w:tbl> element with borders, a repeating header row and fixed widths."""
+               font_size_pt: float = 10, header_fill: str = "D9D9D9",
+               row_fills: Sequence[str | None] | None = None):
+    """Return a <w:tbl> element with borders, a repeating header row and fixed widths.
+    row_fills: background color per data row (None = none)."""
     size = int(font_size_pt * 2)
     tbl = _el("w:tbl")
     tblPr = _el("w:tblPr")
@@ -54,7 +56,7 @@ def make_table(headers: Sequence[str], rows: Sequence[Sequence[Cell]], widths_cm
         grid.append(_el("w:gridCol", w=int(w * CM)))
     tbl.append(grid)
 
-    def add_row(cells: Sequence[Cell], header: bool) -> None:
+    def add_row(cells: Sequence[Cell], header: bool, fill: str | None = None) -> None:
         tr = _el("w:tr")
         trPr = _el("w:trPr")
         trPr.append(_el("w:cantSplit"))
@@ -65,8 +67,8 @@ def make_table(headers: Sequence[str], rows: Sequence[Sequence[Cell]], widths_cm
             tc = _el("w:tc")
             tcPr = _el("w:tcPr")
             tcPr.append(_el("w:tcW", w=int(w * CM), type="dxa"))
-            if header:
-                tcPr.append(_el("w:shd", val="clear", color="auto", fill=header_fill))
+            if header or fill:
+                tcPr.append(_el("w:shd", val="clear", color="auto", fill=header_fill if header else fill))
             tc.append(tcPr)
             for p in _cell_paragraphs(content, header, size):
                 tc.append(p)
@@ -74,8 +76,9 @@ def make_table(headers: Sequence[str], rows: Sequence[Sequence[Cell]], widths_cm
         tbl.append(tr)
 
     add_row(headers, True)
-    for r in rows:
-        add_row(r, False)
+    fills = list(row_fills or [])
+    for i, r in enumerate(rows):
+        add_row(r, False, fills[i] if i < len(fills) else None)
     return tbl
 
 

@@ -175,6 +175,30 @@ def test_build_other_language_falls_back(lib, tmp_path):
     assert "Remedy" in xml and "Translation of the original operating instructions" in xml
 
 
+def test_draft_rows_are_marked(lib, tmp_path):
+    clip = lib.modules["clipper"]
+    clip.data["faults"][0]["draft"] = "Entwurf: automatisch zugeordnet"
+    clip.save_data()
+    lib.reload_modules()
+    assert lib.modules["clipper"].draft_count() == 1
+    machine = Machine(name="Test", modules=["allgemein", "clipper", "service"], variables={"Maschinentyp": "X"})
+    assert any("nicht geprüft" in i.message for i in lib.validate(machine))
+    out = tmp_path / "draft.docx"
+    compose(lib, machine, out, log=lambda *_: None)
+    doc = Document(str(out))
+    xml = ooxml.tostring(doc.element.body)
+    # once below the module's own fault table, once below the fault overview
+    assert xml.count("ENTWURF:") == 2
+    shaded = [r for t in doc.tables for r in t.rows
+              if any(tc.find(f".//{qn('w:shd')}[@{qn('w:fill')}='FCE4C4']") is not None for tc in r._tr)]
+    assert shaded and all("7" in r.cells[0].text or "Drahtvorschub" in "".join(c.text for c in r.cells)
+                          for r in shaded)
+    # a checked row (no draft text) is printed normally
+    lib.modules["clipper"].data["faults"][0].pop("draft")
+    compose(lib, machine, out, log=lambda *_: None)
+    assert "ENTWURF:" not in ooxml.tostring(Document(str(out)).element.body)
+
+
 def test_reimport_archives_old_version(lib, tmp_path):
     clip = lib.modules["clipper"]
     import_file(lib, _module_doc(tmp_path / "c2.docx", "9.5", "Clipper X", ["Neu"]), clip, "de", note="neu")
@@ -187,6 +211,9 @@ def test_seed_from_legacy(tmp_path):
     from clipbook.seed import seed_from_legacy
     lib = seed_from_legacy(LEGACY, tmp_path / "lib", log=lambda *_: None)
     assert len(lib.modules["clipper-dcx5s"].entries("faults")) > 5
+    # everything the import assigned automatically is a draft until someone checks it
+    assert all(e.get("draft") for m in lib.modules.values() for s in ("maintenance", "spare_parts", "faults")
+               for e in m.entries(s))
     machine = Machine.load(lib.machines()[0])
     issues = compose(lib, machine, tmp_path / "x.docx", log=lambda *_: None)
     assert not [i for i in issues if i.level == "error"]
