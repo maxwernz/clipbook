@@ -157,3 +157,23 @@ def test_update_dialog_flow(app, tmp_path, monkeypatch):
     win.settings.remove("update_feed")
     dlg.close()
     win.close()
+
+
+def test_find_library_root_tolerates_one_level_off(tmp_path):
+    from manual_builder.gui.app import find_library_root
+    lib = tmp_path / "Anleitungs-Bibliothek"
+    (lib / "modules").mkdir(parents=True)
+    (lib / "library.yaml").write_text("slots: []\n")
+    assert find_library_root(lib) == lib
+    assert find_library_root(lib / "modules") == lib      # picked a subfolder
+    assert find_library_root(tmp_path) == lib             # picked the folder around it
+    assert find_library_root(tmp_path / "Anleitungs-Bibliothek" / "modules" / "..") is not None
+    (tmp_path / "other").mkdir()
+    assert find_library_root(tmp_path / "other") is None
+
+
+def test_new_library_target_uses_subfolder_when_not_empty(tmp_path):
+    from manual_builder.gui.app import new_library_target
+    assert new_library_target(tmp_path) == tmp_path
+    (tmp_path / "something.txt").write_text("x")
+    assert new_library_target(tmp_path) == tmp_path / "Anleitungs-Bibliothek"

@@ -25,6 +25,7 @@ without a printer therefore doesn't list printer faults.
 uv sync
 uv run manual-builder                       # GUI (asks for the library on first start)
 uv run manual-builder -l ../Anleitungs-Bibliothek build skt-h10-beispiel -o ~/Desktop/out
+uv run manual-builder -l ../Anleitungs-Bibliothek panel skt-h10-beispiel -o ~/Desktop/out   # HMI panel (HTML)
 uv run pytest
 ```
 
@@ -38,6 +39,16 @@ For TOC/page numbers and the PDF, one of these must be installed:
 | none | DOCX only | Word asks "update fields?" on open |
 
 "Automatisch" (auto) tries Word first, then LibreOffice.
+
+## Panel manual (HMI)
+
+**Panel** (next to "PDF erstellen") writes `<machine>_Panel/`: an offline HTML manual for the 10" Siemens
+Unified Comfort Panel, all languages in one folder. Each module becomes a tile, its Word chapters become
+pages split at the headings and, on the panel, into screens that fit without scrolling (text left,
+picture right), and faults, maintenance and spare parts come from the tables.
+Pictures with text boxes and arrows from Word are rebuilt as one scalable figure (tap to enlarge).
+A slot gets `panel: false` in `library.yaml` to leave it out (e.g. the CE declaration).
+Details and the HMI jump addresses: [docs/Panel-HTML.md](docs/Panel-HTML.md). Code: `panel/`.
 
 ## The library
 

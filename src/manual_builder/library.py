@@ -69,6 +69,7 @@ class Slot:
     title: dict
     max: int | None = 1
     required: bool = False
+    panel: bool = True               # shown in the panel manual (library.yaml: "panel: false" hides it)
 
     def label(self, lang: str) -> str:
         return tr(self.title, lang)[0]
@@ -231,7 +232,8 @@ class Library:
         self.default_language: str = cfg.get("default_language", "de")
         self.slots: list[Slot] = [
             Slot(id=s["id"], title=s.get("title") or {"de": s["id"]},
-                 max=s.get("max", 1), required=bool(s.get("required", False)))
+                 max=s.get("max", 1), required=bool(s.get("required", False)),
+                 panel=bool(s.get("panel", True)))
             for s in cfg.get("slots") or []
         ]
         self.labels: dict = cfg.get("labels") or {}

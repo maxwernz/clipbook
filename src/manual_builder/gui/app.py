@@ -24,37 +24,89 @@ def _candidates(explicit: Path | None) -> list[Path]:
     return out
 
 
+NEW_LIBRARY_NAME = "Anleitungs-Bibliothek"
+
+
+def find_library_root(d: Path) -> Path | None:
+    """The folder with library.yaml: `d` itself, its parent (a subfolder like modules/ was picked)
+    or a direct subfolder (the folder that contains the library was picked)."""
+    if (d / "library.yaml").exists():
+        return d
+    if (d.parent / "library.yaml").exists():
+        return d.parent
+    try:
+        subs = sorted(p for p in d.iterdir() if p.is_dir() and (p / "library.yaml").exists())
+    except OSError:
+        return None
+    return subs[0] if len(subs) == 1 else None
+
+
+def new_library_target(d: Path) -> Path:
+    """Where a new library goes: `d` if it is empty, otherwise a fresh subfolder inside it."""
+    if not any(d.iterdir()):
+        return d
+    target, n = d / NEW_LIBRARY_NAME, 2
+    while target.exists() and any(target.iterdir()):
+        target, n = d / f"{NEW_LIBRARY_NAME} {n}", n + 1
+    return target
+
+
 def choose_library(parent=None) -> Library | None:
     while True:
         box = QMessageBox(parent)
         box.setWindowTitle("Bibliothek wählen")
-        box.setText("Wo liegt die Modul-Bibliothek?\n\n"
-                    "Die Bibliothek ist ein Ordner (z. B. auf dem Netzlaufwerk) mit library.yaml, "
-                    "den Modulen und den gespeicherten Maschinen.")
+        box.setText("<b>Keine Modul-Bibliothek gefunden</b>")
+        box.setInformativeText(
+            "Der Anleitungs-Baukasten arbeitet mit einer Bibliothek: einem Ordner mit der Datei "
+            "<i>library.yaml</i>, den Bausteinen (modules) und den gespeicherten Maschinen. "
+            "Normalerweise liegt sie auf dem Netzlaufwerk.<br><br>"
+            "<b>Bibliothek öffnen</b>: Ordner einer vorhandenen Bibliothek auswählen "
+            "(Netzlaufwerk oder eine lokale Kopie, z. B. zum Testen).<br><br>"
+            "<b>Neue Bibliothek anlegen</b>: nur einmalig nötig. Baut eine neue Bibliothek aus dem "
+            "Ordner mit den bisherigen Word-Anleitungen („Bedienungsanleitungen“).")
         open_btn = box.addButton("Bibliothek öffnen …", QMessageBox.ButtonRole.AcceptRole)
-        seed_btn = box.addButton("Neu aus bisherigen Anleitungen …", QMessageBox.ButtonRole.ActionRole)
+        seed_btn = box.addButton("Neue Bibliothek anlegen …", QMessageBox.ButtonRole.ActionRole)
         box.addButton("Beenden", QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(open_btn)
         box.exec()
         clicked = box.clickedButton()
         if clicked is open_btn:
-            d = QFileDialog.getExistingDirectory(parent, "Bibliotheksordner wählen")
+            d = QFileDialog.getExistingDirectory(parent, "Bibliotheksordner wählen (enthält library.yaml)")
             if not d:
                 continue
+            root = find_library_root(Path(d))
+            if root is None:
+                QMessageBox.warning(
+                    parent, "Keine Bibliothek",
+                    f"In „{d}“ gibt es keine library.yaml.\n\n"
+                    "Bitte den Ordner der Bibliothek wählen, in dem library.yaml direkt liegt "
+                    "(neben den Ordnern modules, machines und templates).")
+                continue
             try:
-                return Library(Path(d))
-            except FileNotFoundError as e:
-                QMessageBox.warning(parent, "Keine Bibliothek", str(e))
+                return Library(root)
+            except Exception as e:  # broken library.yaml etc.
+                QMessageBox.warning(parent, "Bibliothek fehlerhaft",
+                                    f"Die Bibliothek in „{root}“ lässt sich nicht öffnen:\n{e}")
         elif clicked is seed_btn:
-            legacy = QFileDialog.getExistingDirectory(parent, "Ordner „Bedienungsanleitungen“ wählen")
+            legacy = QFileDialog.getExistingDirectory(
+                parent, "Schritt 1 von 2: Ordner mit den bisherigen Anleitungen („Bedienungsanleitungen“) wählen")
             if not legacy:
                 continue
-            target = QFileDialog.getExistingDirectory(parent, "Leeren Ordner für die neue Bibliothek wählen")
+            from ..seed import LEGACY_MODULES, seed_from_legacy
+            if not (Path(legacy) / LEGACY_MODULES[0][1]["de"]).exists():
+                QMessageBox.warning(
+                    parent, "Falscher Ordner",
+                    f"„{legacy}“ enthält nicht die bisherigen Anleitungen "
+                    f"(erwartet z. B. {LEGACY_MODULES[0][1]['de']}).\n\n"
+                    "Zum Testen ohne Netzlaufwerk besser eine Kopie der Bibliothek über "
+                    "„Bibliothek öffnen“ verwenden.")
+                continue
+            target = QFileDialog.getExistingDirectory(
+                parent, "Schritt 2 von 2: Speicherort für die neue Bibliothek wählen")
             if not target:
                 continue
-            if any(Path(target).iterdir()):
-                QMessageBox.warning(parent, "Ordner nicht leer", "Bitte einen leeren Ordner wählen.")
-                continue
-            from ..seed import seed_from_legacy
+            target = new_library_target(Path(target))
+            target.mkdir(parents=True, exist_ok=True)
             try:
                 return seed_from_legacy(Path(legacy), Path(target), log=lambda *_: None)
             except Exception as e:  # pragma: no cover

@@ -1,4 +1,4 @@
-"""Command line: manual-builder [gui|build|check|import|seed|template] ..."""
+"""Command line: manual-builder [gui|build|panel|check|import|seed|template] ..."""
 
 from __future__ import annotations
 
@@ -29,6 +29,26 @@ def cmd_build(args) -> int:
         return 2
     for i in res.issues:
         print(i)
+    return 0
+
+
+def cmd_panel(args) -> int:
+    from .build import BuildError
+    from .panel.export import build_panel
+
+    lib = _lib(args)
+    machine_path = Path(args.machine)
+    if not machine_path.exists():
+        machine_path = lib.machines_dir / f"{args.machine}.yaml"
+    machine = Machine.load(machine_path)
+    try:
+        res = build_panel(lib, machine, Path(args.out))
+    except BuildError as e:
+        print(e, file=sys.stderr)
+        return 2
+    for issue in res.issues:
+        print(issue)
+    print(res.folder)
     return 0
 
 
@@ -89,6 +109,8 @@ def cmd_self_test(args) -> int:
         from .gui import style
         for name in ("Manrope.ttf", "logo.png", "app_icon.png", "clip.png"):
             result["checks"][name] = (style.ASSETS / name).exists()
+        from .panel.export import TEMPLATE
+        result["checks"]["panel_template"] = all((TEMPLATE / n).exists() for n in ("index.html", "app.js", "style.css"))
         import docx  # noqa: F401
         import docxcompose  # noqa: F401
         from docx import Document
@@ -172,6 +194,10 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("--engine", default="auto", choices=["auto", "word", "libreoffice", "none"])
     b.add_argument("--no-pdf", action="store_true")
 
+    pn = sub.add_parser("panel", help="Anleitung fürs HMI-Panel erzeugen (HTML-Ordner, alle Sprachen)")
+    pn.add_argument("machine", help="Maschinen-Datei (.yaml) oder Name in library/machines")
+    pn.add_argument("--out", "-o", default="output")
+
     c = sub.add_parser("check", help="Word-Datei prüfen, ohne sie zu importieren")
     c.add_argument("file")
     c.add_argument("--kind", default="component", choices=["component", "chapters"])
@@ -201,6 +227,6 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd in (None, "gui"):
         from .gui.app import run
         return run(Path(args.library) if "--library" in argv or "-l" in argv else None)
-    return {"build": cmd_build, "check": cmd_check, "import": cmd_import, "seed": cmd_seed,
+    return {"build": cmd_build, "panel": cmd_panel, "check": cmd_check, "import": cmd_import, "seed": cmd_seed,
             "self-test": cmd_self_test, "update": cmd_update,
             "template": cmd_template}[args.cmd](args)

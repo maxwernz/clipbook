@@ -924,9 +924,10 @@ class ManualPanel(QFrame):
         res = QHBoxLayout()
         self.open_pdf = text_button("PDF öffnen", "pdf", None, lambda: ws.open_result("pdf"), ERROR)
         self.open_doc = text_button("Word", "word", None, lambda: ws.open_result("docx"), ACCENT)
+        self.open_html = text_button("Im Browser", "globe", None, lambda: ws.open_result("html"), ACCENT)
         self.open_dir = text_button("Ordner", "folder", None, lambda: ws.open_result("dir"))
         self.log_btn = text_button("Protokoll", "info", "flat", self._toggle_log)
-        for b in (self.open_pdf, self.open_doc, self.open_dir, self.log_btn):
+        for b in (self.open_pdf, self.open_doc, self.open_html, self.open_dir, self.log_btn):
             b.hide()
             res.addWidget(b)
         res.addStretch()
@@ -944,18 +945,18 @@ class ManualPanel(QFrame):
 # ---------------------------------------------------------------- workspace
 
 class BuildWorker(QObject):
+    """Runs job(log) in a thread: the PDF build or the panel export."""
     log = Signal(str)
     done = Signal(object)
     failed = Signal(str)
 
-    def __init__(self, lib, machine, out_dir, pdf, engine):
+    def __init__(self, job):
         super().__init__()
-        self.args = (lib, machine, out_dir, pdf, engine)
+        self.job = job
 
     def run(self):
-        lib, machine, out_dir, pdf, engine = self.args
         try:
-            self.done.emit(build_manual(lib, machine, out_dir, pdf=pdf, engine=engine, log=self.log.emit))
+            self.done.emit(self.job(self.log.emit))
         except BuildError as e:
             self.failed.emit("<br>".join(i.message for i in e.issues))
         except Exception as e:  # pragma: no cover - shown to the user
@@ -1003,6 +1004,10 @@ class Workspace(QWidget):
         self.lang_group = QButtonGroup(self)
         head.addLayout(self.lang_row)
         head.addSpacing(10)
+        self.panel_btn = text_button("Panel", "monitor", None, self.build_panel)
+        self.panel_btn.setToolTip("Anleitung fürs HMI-Panel (10\" Touch) als HTML-Ordner, alle Sprachen")
+        self.panel_btn.setMinimumHeight(40)
+        head.addWidget(self.panel_btn)
         self.build_btn = text_button("PDF erstellen", "play", "primary", self.build, "#ffffff")
         self.build_btn.setMinimumHeight(40)
         head.addWidget(self.build_btn)
@@ -1045,7 +1050,7 @@ class Workspace(QWidget):
         self.history = []
         self.last_result = None
         enabled = machine is not None
-        for w in (self.name_edit, self.build_btn, self.manual, self.library):
+        for w in (self.name_edit, self.build_btn, self.panel_btn, self.manual, self.library):
             w.setEnabled(enabled)
         self.name_edit.setText(machine.name if machine else "Keine Maschine gewählt")
         self.name_edit.setCursorPosition(0)   # long names: show the beginning
@@ -1055,7 +1060,8 @@ class Workspace(QWidget):
             e.setText(machine.variables.get(key, "") if machine else "")
             e.setCursorPosition(0)
             e.setPlaceholderText(self.win.lib.default_variables(self.lang).get(key, ""))
-        for b in (self.manual.open_pdf, self.manual.open_doc, self.manual.open_dir, self.manual.log_btn):
+        for b in (self.manual.open_pdf, self.manual.open_doc, self.manual.open_html, self.manual.open_dir,
+                  self.manual.log_btn):
             b.hide()
         self.manual.log.clear()
         self.manual.log.hide()
@@ -1140,6 +1146,7 @@ class Workspace(QWidget):
             lines.append(f"<span style='color:{OK}'>✓</span> <span style='color:{MUTED}'>Bereit zum Erstellen</span>")
         self.manual.issues.setText("<br>".join(lines))
         self.build_btn.setEnabled(not errors and self.thread is None)
+        self.panel_btn.setEnabled(not errors and self.thread is None)
 
     # ---------------------------------------------------------------- editing the module list
     def _snapshot(self) -> None:
@@ -1252,24 +1259,36 @@ class Workspace(QWidget):
 
     # ---------------------------------------------------------------- build
     def build(self) -> None:
+        settings = self.win.settings
+        engine = settings.value("engine", "auto")
+        self._start(lambda lib, machine, out_dir, log: build_manual(lib, machine, out_dir, pdf=engine != "none",
+                                                                 engine=engine, log=log),
+                    "Bausteine werden zusammengesetzt …")
+
+    def build_panel(self) -> None:
+        from ..panel.export import build_panel
+        self._start(build_panel, "Panel-Anleitung wird erstellt …")
+
+    def _start(self, job, status: str) -> None:
         if self.thread is not None or self.machine is None or not self.build_btn.isEnabled():
             return
         self.save()
         settings = self.win.settings
         out_dir = Path(settings.value("output_dir", str(Path.home() / "Documents" / "Anleitungen"))).expanduser()
-        engine = settings.value("engine", "auto")
         mp = self.manual
         mp.log.clear()
-        for b in (mp.open_pdf, mp.open_doc, mp.open_dir):
+        for b in (mp.open_pdf, mp.open_doc, mp.open_html, mp.open_dir):
             b.hide()
         self.build_btn.setEnabled(False)
+        self.panel_btn.setEnabled(False)
         self.build_btn.setText("Wird erstellt …")
         mp.progress.show()
-        mp.status.setText("Bausteine werden zusammengesetzt …")
+        mp.status.setText(status)
         m = self.machine
         snapshot = Machine(name=m.name, language=m.language, modules=list(m.modules), variables=dict(m.variables))
+        lib = self.win.lib
         self.thread = QThread()
-        self.worker = BuildWorker(self.win.lib, snapshot, out_dir, engine != "none", engine)
+        self.worker = BuildWorker(lambda log: job(lib, snapshot, out_dir, log=log))
         self.worker.moveToThread(self.thread)
         self.thread.started.connect(self.worker.run)
         self.worker.log.connect(self._log)
@@ -1281,6 +1300,8 @@ class Workspace(QWidget):
         self.manual.log.appendPlainText(text)
         if text.startswith("+ "):
             self.manual.status.setText(f"Füge ein: {text[2:]}")
+        elif text.startswith("Panel: "):
+            self.manual.status.setText(f"Panel: {text[7:]}")
         elif "Inhaltsverzeichnis" in text:
             self.manual.status.setText("Inhaltsverzeichnis und Seitenzahlen werden berechnet …")
 
@@ -1297,6 +1318,16 @@ class Workspace(QWidget):
     def _done(self, res) -> None:
         self._finish()
         self.last_result = res
+        if hasattr(res, "folder"):  # panel export
+            for i in res.issues:
+                self.manual.log.appendPlainText(str(i))
+            warn = [i for i in res.issues if i.level == "warning"]
+            self.manual.status.setText(f"<span style='color:{OK}'>✓ Panel-Anleitung:</span> {res.folder.name}"
+                                       + (f" <span style='color:{MUTED}'>· {len(warn)} Hinweise im Protokoll</span>"
+                                          if warn else ""))
+            self.manual.open_html.show()
+            self.manual.open_dir.show()
+            return
         self.machine.last_built = _dt.datetime.now().isoformat(timespec="minutes")
         self.save()
         for i in res.issues:
@@ -1319,7 +1350,10 @@ class Workspace(QWidget):
     def open_result(self, what: str) -> None:
         r = self.last_result
         if r:
-            open_path(r.pdf if what == "pdf" else r.docx if what == "docx" else r.docx.parent)
+            if hasattr(r, "folder"):
+                open_path(r.folder / "index.html" if what == "html" else r.folder)
+            else:
+                open_path(r.pdf if what == "pdf" else r.docx if what == "docx" else r.docx.parent)
 
 
 # ---------------------------------------------------------------- settings

@@ -15,7 +15,8 @@ BUNDLE_ID = re.search(r'BUNDLE_ID = "([^"]+)"', init).group(1)
 ICON = ROOT / "packaging" / "icon"
 
 datas = collect_data_files("docx") + collect_data_files("docxcompose") + collect_data_files("certifi") + [
-    (str(ROOT / "src" / "manual_builder" / "gui" / "assets"), "manual_builder/gui/assets")]
+    (str(ROOT / "src" / "manual_builder" / "gui" / "assets"), "manual_builder/gui/assets"),
+    (str(ROOT / "src" / "manual_builder" / "panel" / "template"), "manual_builder/panel/template")]
 hidden = ["truststore"]
 if sys.platform == "win32":
     hidden += ["win32com", "win32com.client", "pythoncom", "pywintypes"]
