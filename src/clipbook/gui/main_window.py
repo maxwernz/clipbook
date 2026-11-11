@@ -1018,7 +1018,7 @@ class Workspace(QWidget):
         self.lang_group = QButtonGroup(self)
         head.addLayout(self.lang_row)
         head.addSpacing(10)
-        self.panel_btn = text_button("Panel", "monitor", None, self.build_panel)
+        self.panel_btn = text_button("Panel-HTML erstellen", "monitor", None, self.build_panel)
         self.panel_btn.setToolTip("Anleitung fürs HMI-Panel (10\" Touch) als HTML-Ordner, alle Sprachen")
         self.panel_btn.setMinimumHeight(40)
         head.addWidget(self.panel_btn)

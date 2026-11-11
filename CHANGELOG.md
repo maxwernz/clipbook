@@ -4,10 +4,13 @@ Neue Versionen stehen oben. Der Abschnitt einer Version erscheint in der App als
 
 ## Unveröffentlicht
 
+## 0.3.0 – 2026-11-11 (Testversion)
+
 - Neuer Name: **Clipbook** (vorher Anleitungs-Baukasten). Einstellungen und Bibliothek werden übernommen,
   das Update ersetzt die alte App.
 - Bedienungsanleitung fürs HMI-Panel (HTML) exportieren
 - Automatisch zugeordnete Wartung, Ersatzteile und Störungen sind als **Entwurf** gekennzeichnet (App, Prüfung, Word/PDF, Panel), bis sie jemand als geprüft markiert
+- Klarere Ersteinrichtung mit vorhandener Bibliothek oder lokaler Testkopie; Kurzanleitung für Installation und Panel-Export
 
 ## 0.2.1 – 2026-10-20
 

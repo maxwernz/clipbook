@@ -13,6 +13,19 @@
 
 ## Woher holt sich die App Updates?
 
+### Testversion verteilen
+
+Für eine Testversion ohne automatisches Update bestehender Installationen: Versionsnummer und
+Änderungsprotokoll vorbereiten, den Branch pushen und den Workflow **Release** manuell für diesen
+Branch starten. **prerelease = true** ist beim manuellen Start voreingestellt. Die Veröffentlichung
+erhält das Kennzeichen „Pre-release“ und wird nicht als GitHub-„latest“ angeboten. Erst wenn alle
+drei Plattformpakete erfolgreich gebaut wurden, wird sie veröffentlicht. Der Release-Tag zeigt auf
+den tatsächlich gebauten Commit.
+
+Die Testperson bekommt den Release-Link und separat das private Testpaket mit Bibliothek und
+Panel-HTML. Die Bibliothek und erzeugte Anleitungen niemals als öffentliche Release-Assets hochladen.
+Die [Kurzanleitung](Kurzanleitung.html) erklärt Installation, Bibliotheksauswahl und Panel-Tests.
+
 Die App sucht in dieser Reihenfolge nach `latest.json` und nimmt die neueste Version, die sie findet:
 
 | | Quelle | Wofür |

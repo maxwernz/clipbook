@@ -1,6 +1,6 @@
 [project]
 name = "clipbook"
-version = "0.2.1"
+version = "0.3.0"
 description = "Betriebsanleitungen aus Word-Modulen zusammenstellen (Inhaltsverzeichnis, Seitenzahlen, Störungslisten)"
 authors = [{ name = "Profi L-Clip GmbH" }]
 requires-python = ">=3.12"

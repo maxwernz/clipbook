@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clipbook · Schnellstart für den Test</title>
+<style>
+body{font:17px/1.65 system-ui,sans-serif;color:#24313b;background:#f5f5f2;margin:0}
+main{max-width:780px;margin:40px auto;padding:40px;background:white;border-top:6px solid #165c50}
+h1,h2{line-height:1.25;color:#124d43}h1{font-size:34px}h2{margin-top:34px;font-size:23px}
+.tag{color:#165c50;font-weight:700;letter-spacing:.1em;font-size:13px}.note{padding:16px 20px;background:#fff4da;border-left:4px solid #c58815}
+code{font-size:.92em;background:#eef1ef;padding:2px 5px;border-radius:3px}li{margin:10px 0}
+a{color:#165c50}footer{border-top:1px solid #ddd;margin-top:30px;padding-top:16px;font-size:14px}
+@media(max-width:650px){main{margin:0;padding:24px}}@media print{body{background:white}main{margin:0;padding:0;border:0}h2{break-after:avoid}}
+</style>
+<main>
+<div class="tag">CLIPBOOK 0.3.0 · TESTVERSION</div>
+<h1>Installieren. Bibliothek öffnen.<br>Panel-Anleitung ausprobieren.</h1>
+<p>Clipbook stellt Betriebsanleitungen aus Word-Bausteinen zusammen. Zusätzlich erzeugt es eine offline nutzbare HTML-Anleitung für das HMI-Panel.</p>
+<h2>1 · Testpaket vollständig entpacken</h2>
+<p>Die ZIP-Datei über „Alle extrahieren“ (Windows) oder per Doppelklick (Mac) in einen lokalen Ordner entpacken. Nicht direkt innerhalb der ZIP-Datei arbeiten. Der Ordner enthält:</p>
+<ul>
+<li><b>Anleitungs-Bibliothek</b> — lokale Testkopie mit Bausteinen und der Beispielmaschine. Änderungen betreffen nur diese Kopie.</li>
+<li><b>Panel / SKT_H10_Beispiel_Panel</b> — bereits erzeugte HTML-Anleitung, sofort testbar.</li>
+<li><b>Installer</b> — Installationsdateien, falls im Paket enthalten. Alternativ aus dem <a href="https://github.com/maxwernz/clipbook/releases/tag/v0.3.0">Release 0.3.0</a> laden.</li>
+</ul>
+<h2>2 · App installieren</h2>
+<p><b>Windows:</b> <code>Clipbook-0.3.0-Setup.exe</code> starten und dem Assistenten folgen. Falls Windows SmartScreen die Datei blockiert: „Weitere Informationen“ → „Trotzdem ausführen“, sofern diese Datei von der vereinbarten Quelle stammt.</p>
+<p><b>Mac:</b> die passende <code>.dmg</code> öffnen und Clipbook nach „Programme“ ziehen. <code>arm64</code> ist für Apple Silicon (M1 oder neuer), <code>x86_64</code> für Intel-Macs. Falls macOS den Start blockiert: nach dem ersten Startversuch unter Systemeinstellungen → Datenschutz &amp; Sicherheit „Dennoch öffnen“ wählen.</p>
+<p>Python und Entwicklungswerkzeuge sind nicht erforderlich. Für PDF-Ausgabe wird Microsoft Word oder LibreOffice benötigt. HTML-Export benötigt kein Word; für alte WMF/EMF-Bilder aus Word-Dokumenten ist <a href="https://www.libreoffice.org/download/download-libreoffice/">LibreOffice</a> erforderlich. Die mitgelieferte HTML-Anleitung enthält die bereits umgewandelten Bilder und benötigt nur einen Browser.</p>
+<h2>3 · Beim ersten Start die Testbibliothek öffnen</h2>
+<ol>
+<li>Clipbook starten und <b>Bibliothek öffnen …</b> wählen.</li>
+<li>Den entpackten Ordner <b>Anleitungs-Bibliothek</b> auswählen. Darin liegt direkt <code>library.yaml</code>, daneben <code>modules</code>, <code>machines</code> und <code>templates</code>.</li>
+<li>Links die Maschine <b>SKT H10 Beispiel</b> auswählen. Sollte bereits eine andere Bibliothek geöffnet sein, in den Einstellungen zur lokalen Testbibliothek wechseln.</li>
+</ol>
+<p><b>„Neue Bibliothek anlegen“ ist für diesen Test nicht nötig.</b> Die App merkt sich die gewählte Bibliothek. Änderungen an Maschinen werden automatisch gespeichert; zum Experimentieren die Maschine über das Menü „⋯“ duplizieren.</p>
+<h2>4 · HTML sofort testen oder neu erzeugen</h2>
+<p><b>Sofort testen, auch ohne App:</b> <code>Panel/SKT_H10_Beispiel_Panel/index.html</code> im Browser öffnen. Kein Server und kein Internet nötig. Sprache oben umschalten, Bausteine öffnen, Seiten weiterblättern und Bilder antippen.</p>
+<p><b>Neu erzeugen:</b> In Clipbook die Maschine auswählen und oben <b>Panel-HTML erstellen</b> anklicken. Nach Abschluss über <b>Im Browser</b> ansehen oder über den Ordner-Knopf die Ausgabe öffnen. Standard: <code>Dokumente/Anleitungen/&lt;Maschine&gt;_Panel</code>; der Ausgabeordner lässt sich in den Einstellungen ändern.</p>
+<p><b>Immer den gesamten Ordner <code>&lt;Maschine&gt;_Panel</code> weitergeben.</b> Neben <code>index.html</code> gehören <code>app.js</code>, <code>style.css</code>, <code>data.js</code> und <code>img/</code> dazu. Ein erneuter Export ersetzt den bisherigen Panel-Ordner dieser Maschine; eigene Änderungen vorher separat sichern.</p>
+<h2>5 · Auf dem Siemens-Panel testen</h2>
+<p>Den gesamten Panel-Ordner auf den Testspeicher kopieren. Im WinCC Unified Web Control <code>file:///…/index.html?lang=de#/</code> öffnen; <code>…</code> durch den tatsächlichen Speicherpfad auf dem Panel ersetzen. Die genaue Speicheradresse und das Verhalten hängen von TIA-, Firmware- und Panel-Version ab und müssen am Gerät geprüft werden.</p>
+<p>Direkter Störungsaufruf: <code>index.html?lang=de#/fault/&lt;Code&gt;</code>. Dafür einen tatsächlich vorhandenen Code aus der Störungsliste einsetzen. Alarmnummern aus SPS/HMI müssen mit den Codes der Bibliothek übereinstimmen. Lokaler Browser-Test allein bestätigt die Funktion im Web Control noch nicht.</p>
+<h2>6 · Was wir beim Test prüfen möchten</h2>
+<ul>
+<li>Installation und Auswahl der Bibliothek ohne Unterstützung möglich?</li>
+<li>Beispielmaschine sichtbar, Bausteine hinzufügbar und umsortierbar?</li>
+<li>Panel-Export vollständig; Bilder, Beschriftungen und Sprachen richtig?</li>
+<li>Auf dem echten Panel: Schrift und Schaltflächen gut bedienbar, Weiter/Zurück und Bildvergrößerung nutzbar?</li>
+<li>Direkter Störungsaufruf und erneuter Aufruf derselben Störung nach dem Weiterblättern erfolgreich?</li>
+</ul>
+<div class="note"><b>Inhaltlicher Teststand:</b> Automatisch zugeordnete Wartungs-, Ersatzteil- und Störungszeilen sind als „Entwurf“ markiert. In der mitgelieferten Bibliothek sind noch 68 Zeilen fachlich zu prüfen. Nur nach tatsächlicher Prüfung „Als geprüft markieren“ verwenden. Dieses Paket dient dem Funktionstest und ist keine freigegebene Betriebsanleitung.</div>
+<h2>Bei Problemen</h2>
+<p>Bitte Betriebssystem, App-Version, gewählte Maschine, Arbeitsschritte und einen Screenshot der Fehlermeldung notieren. Bei Exportproblemen das Protokoll im Ergebnisbereich öffnen. App-Protokolle: Windows <code>%LOCALAPPDATA%\Clipbook\Logs</code>, Mac <code>~/Library/Logs/Clipbook</code>.</p>
+<footer>Interne Testunterlagen von Profi L-Clip. Bibliothek und erzeugte Anleitungen separat und nur an die vorgesehenen Testpersonen weitergeben.</footer>
+</main>
+</html>

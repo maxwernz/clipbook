@@ -42,13 +42,17 @@ For TOC/page numbers and the PDF, one of these must be installed:
 
 ## Panel manual (HMI)
 
-**Panel** (next to "PDF erstellen") writes `<machine>_Panel/`: an offline HTML manual for the 10" Siemens
+**Panel-HTML erstellen** (next to "PDF erstellen") writes `<machine>_Panel/`: an offline HTML manual for the 10" Siemens
 Unified Comfort Panel, all languages in one folder. Each module becomes a tile, its Word chapters become
 pages split at the headings and, on the panel, into screens that fit without scrolling (text left,
 picture right), and faults, maintenance and spare parts come from the tables.
 Pictures with text boxes and arrows from Word are rebuilt as one scalable figure (tap to enlarge).
 A slot gets `panel: false` in `library.yaml` to leave it out (e.g. the CE declaration).
 Details and the HMI jump addresses: [docs/Panel-HTML.md](docs/Panel-HTML.md). Code: `panel/`.
+
+For testers: [German quick-start guide](docs/Kurzanleitung.html). App installers are public release
+assets; the library and generated manuals are confidential and must be shared separately.
+`tools/prepare_handoff.py` creates a private tester ZIP under the ignored `release/` directory.
 
 ## The library
 

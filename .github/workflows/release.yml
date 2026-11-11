@@ -6,6 +6,11 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      prerelease:
+        description: "Publish as a test release (not offered as an automatic update)"
+        type: boolean
+        default: true
 
 env:
   PYTHONIOENCODING: utf-8
@@ -78,7 +83,7 @@ jobs:
 
   publish:
     needs: build
-    if: ${{ !cancelled() }}
+    if: ${{ needs.build.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -89,12 +94,17 @@ jobs:
           path: dl
           merge-multiple: true
       - name: latest.json
-        run: python3 tools/publish_update.py dl --to out --require windows-x64,macos-arm64
+        run: python3 tools/publish_update.py dl --to out --require windows-x64,macos-arm64,macos-x86_64
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          TEST_RELEASE: ${{ inputs.prerelease }}
         run: |
           VERSION=$(python3 -c "import json;print(json.load(open('out/latest.json'))['version'])")
           python3 -c "import json;print(json.load(open('out/latest.json'))['notes'])" > notes.md
-          gh release create "v$VERSION" --title "Clipbook $VERSION" --notes-file notes.md \
-            out/* $(find dl -name '*.dmg') $(find dl -name 'asset-*.json')
+          ARGS=()
+          if [ "$TEST_RELEASE" = "true" ]; then
+            ARGS+=(--prerelease --latest=false)
+          fi
+          gh release create "v$VERSION" --target "$GITHUB_SHA" --title "Clipbook $VERSION" --notes-file notes.md \
+            "${ARGS[@]}" out/* docs/Kurzanleitung.html $(find dl -name '*.dmg') $(find dl -name 'asset-*.json')
